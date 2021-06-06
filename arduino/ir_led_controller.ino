@@ -1,4 +1,5 @@
 #include "IRremote.h"
+// #include <EEPROM.h>
 
 const byte LED_PIN = 5;
 const byte IR_RECEIVE_PIN = 2;
@@ -16,8 +17,8 @@ uint8_t sCommands[6] =  {
   };
 uint8_t sRepeats = 0;
 
-bool led_state = false;
-byte led_value = 0;
+bool led_state = false; //EEPROM.read(100);
+byte led_value = 1;  //EEPROM.read(101);
 
 /*
  * 
@@ -34,6 +35,18 @@ byte led_value = 0;
  * 0_0 - state is 0
  * 1_0 - led_value is 0
  */
+
+void set_led_state(bool state) {
+    led_state = state;
+//     EEPROM.update(100, led_state);
+    set_led();
+}
+
+void set_led_value(byte value) {
+    led_value = value;
+//     EEPROM.update(101, led_value);
+    set_led();
+}
 
 void set_led(){
   if (led_state) {
@@ -76,13 +89,11 @@ void loop() {
 //          break;
 //        }
         case 10: {
-          led_state = argument;
-          set_led();
+          set_led_state(argument);
           break;
         }
         case 11: {
-          led_value = min(max(argument, 0), 255);
-          set_led();
+          set_led_value(min(max(argument, 0), 255));
           break;
         }
       }
@@ -105,7 +116,6 @@ void loop() {
 //          break;
 //        }
         case 10: {
-          
           if (led_state)
               Serial.print("0_1\r\n");
           else
@@ -128,8 +138,7 @@ void loop() {
              if (IrReceiver.decodedIRData.command == sCommands[command_index]) {
                  switch (command_index) {
                     case 0: {
-                      led_state = !led_state;
-                      set_led();
+                      set_led_state(!led_state);
 //                      if (led_state)
 //                          Serial.print("0_1\r\n");
 //                      else
@@ -137,16 +146,14 @@ void loop() {
                       break;
                     }
                     case 2: {
-                      led_value = min(led_value + 5, 255);
-                      set_led();
+                      set_led_value(min(led_value + 5, 255));
 //                      Serial.print("1_");
 //                      Serial.print(led_value);
 //                      Serial.print("\r\n");
                       break;
                     }
                     case 3: {
-                      led_value = max(led_value - 5, 0);
-                      set_led();
+                      set_led_value(max(led_value - 5, 0));
 //                      Serial.print("1_");
 //                      Serial.print(led_value);
 //                      Serial.print("\r\n");
