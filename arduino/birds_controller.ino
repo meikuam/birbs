@@ -1,5 +1,6 @@
 #include "IRremote.h"
 #include <Servo.h>
+#include "ThreadHandler.h"
 
 // leds control
 #define DELAY_AFTER_SEND 20
@@ -9,8 +10,8 @@ class LedController {
     /*
    * incoming commands:
    * 10 - get state
-   * 11 0 - set state to value
-   * 12 5 - set led_value to value
+   * 11 1 - set state to value (possible 1 - off, 2 - on)
+   * 12 5 - set led_value to value (possible 1 - 255)
    * 
    * outcomming commands:
    * 0_0 - first number - led_state, second number - led_value
@@ -42,7 +43,7 @@ class LedController {
             this->led_step = led_step;
             
             pinMode(this->led_pin, OUTPUT);
-            IrReceiver.begin(this->ir_pin, ENABLE_LED_FEEDBACK);
+            IrReceiver.begin(this->ir_pin);
             
             this->set_led();
         };
@@ -144,6 +145,16 @@ class ServoController {
 
 
 class FeederController {
+      /*
+     * incoming commands:
+     * 20 1 - get feeder box angle for first instance
+     * 21 1 0 - set feeder box to angle for first instance
+     * 22 1- enable feeder motor
+     * 23 1 0 - enable feeder motor for number ms
+     * 
+     * outcomming commands:
+     * 1_0 - feeder box angle for first instance
+     */
     private:
     public:
         ServoController* feeder_box_controller;
@@ -189,6 +200,14 @@ class FeederController {
 // drinker control
 
 class DrinkerController {
+        /*
+     * incoming commands:
+     * 30 1 - get drinker valves states for first instance
+     * 31 1 0 - set drinker valve state (angle) for input of first instance
+     * 32 1 0 - set drinker valve state (angle) for output of first instance
+     * outcomming commands:
+     * 1_0_0 - values for valves of first instance
+     */
     private:
     public:
         ServoController* input_controller;
@@ -234,86 +253,195 @@ class DrinkerController {
         
 };
 
+// led control
+LedController* led_controller;
+
+// feeder control
+FeederController** feeder_controllers;
+
+// drinker control
+DrinkerController** drinker_controllers;
+
 
 void setup() {
     Serial.begin(115200);
 
     // led control
-    LedController led_controller(2, 5);
+    led_controller = new LedController(2, 3);
 
     // feeder control
-    FeederController feeder_controller1(3, 4);
-    FeederController feeder_controller2(6, 7);
+    feeder_controllers = new FeederController*[2];
+    feeder_controllers[0] = new FeederController(4, 5);
+    feeder_controllers[1] = new FeederController(6, 7);
 
     // drinker control
-    DrinkerController drinker_controller1(8, 9);
-    DrinkerController drinker_controller2(10, 11);
+    drinker_controllers = new DrinkerController*[2];
+    drinker_controllers[0] = new DrinkerController(8, 9);
+    drinker_controllers[1] = new DrinkerController(10, 11);
 }
 
+
 void loop() {
+  // TODO: https://arduino.stackexchange.com/questions/439/why-does-starting-the-serial-monitor-restart-the-sketch
   if (Serial.available()) {
       int command_id = Serial.parseInt();
       switch (command_id) {
           case 10: {
-              if (led_controller.led_state) {
+              if (led_controller->led_state) {
                   Serial.print("1_");
               } else {
                   Serial.print("0_");
               }
-              Serial.print(led_controller.led_value);
+              Serial.print(led_controller->led_value);
               Serial.print("\r\n");
               break;
           }
           case 11: {
               int argument = Serial.parseInt();
-              led_controller.set_led_state(argument);
+              if (argument == 1) {
+                  led_controller->set_led_state(false);
+              } else if (argument == 2){
+                  led_controller->set_led_state(true);
+              }
               break;
           }
-          case 11: {
+          case 12: {
               int argument = Serial.parseInt();
-              led_controller.set_led_value(argument);
+              if (argument > 0) {
+                  led_controller->set_led_value(argument);
+              }
               break;
           }
+
           case 20: {
-              
+              int argument = Serial.parseInt();
+              switch (argument) {
+                  case 1: {
+                      Serial.print("0_");
+                      Serial.print(feeder_controllers[0]->feeder_box_controller->servo_angle);
+                      Serial.print("\r\n");
+                      break;
+                  }
+                  case 2: {
+                      Serial.print("1_");
+                      Serial.print(feeder_controllers[1]->feeder_box_controller->servo_angle);
+                      Serial.print("\r\n");
+                      break;
+                  }
+              }
+          }
+          case 21: {
+              int argument1 = Serial.parseInt();
+              int argument2 = Serial.parseInt();
+              switch (argument1) {
+                  case 1: {
+                      if (argument2 > 0) {
+                          feeder_controllers[0]->feeder_box_controller->write(argument2);
+                      }
+                      break;
+                  }
+                  case 2: {
+                      if (argument2 > 0) {
+                          feeder_controllers[1]->feeder_box_controller->write(argument2);
+                      }
+                      break;
+                  }
+              }
+          }
+          case 22: {
+              int argument = Serial.parseInt();
+              switch (argument) {
+                  case 1: {
+                      feeder_controllers[0]->feed();
+                      break;
+                  }
+                  case 2: {
+                      feeder_controllers[1]->feed();
+                      break;
+                  }
+              }
+          }
+          case 23: {
+              int argument1 = Serial.parseInt();
+              int argument2 = Serial.parseInt();
+              switch (argument1) {
+                  case 1: {
+                      if (argument2 > 0) {
+                          feeder_controllers[0]->feed(argument2);                      
+                      }
+                      break;
+                  }
+                  case 2: {
+                      if (argument2 > 0) {
+                          feeder_controllers[1]->feed(argument2);
+                      }
+                      break;
+                  }
+              }
+          }
+
+          case 30: {
+              int argument = Serial.parseInt();
+              switch (argument) {
+                  case 1: {
+                      Serial.print("0_");
+                      Serial.print(drinker_controllers[0]->input_controller->servo_angle);
+                      Serial.print("_");
+                      Serial.print(drinker_controllers[0]->output_controller->servo_angle);
+                      Serial.print("\r\n");
+                      break;
+                  }
+                  case 2: {
+                      Serial.print("0_");
+                      Serial.print(drinker_controllers[1]->input_controller->servo_angle);
+                      Serial.print("_");
+                      Serial.print(drinker_controllers[1]->output_controller->servo_angle);
+                      Serial.print("\r\n");
+                      break;
+                  }
+              }
+          }
+          case 31: {
+              int argument1 = Serial.parseInt();
+              int argument2 = Serial.parseInt();
+              switch (argument1) {
+                  case 1: {
+                      if (argument2 > 0) {
+                          drinker_controllers[0]->input_controller->write(argument2);
+                      }
+                      break;
+                  }
+                  case 2: {
+                      if (argument2 > 0) {
+                          drinker_controllers[1]->input_controller->write(argument2);
+                      }
+                      break;
+                  }
+              }
+          }
+          case 32: {
+              int argument1 = Serial.parseInt();
+              int argument2 = Serial.parseInt();
+              switch (argument1) {
+                  case 1: {
+                      if (argument2 > 0) {
+                          drinker_controllers[0]->output_controller->write(argument2);
+                      }
+                      break;
+                  }
+                  case 2: {
+                      if (argument2 > 0) {
+                          drinker_controllers[1]->output_controller->write(argument2);
+                      }
+                      break;
+                  }
+              }
+          }
+          default: {
+            Serial.println("unsupported");
+            break;
           }
       }
-    
-//    int servo_id = Serial.parseInt();
-//    if (servo_id == 1) {
-//      angle1 = Serial.parseInt();
-//      valve1.write(angle1);
-//      delay(10);
-//      Serial.println("servoid 1");
-//    } else if (servo_id == 2) {
-//      angle2 = Serial.parseInt();
-//      valve2.write(angle2);
-//      delay(10);
-//      Serial.println("servoid 3");
-//    } else if (servo_id == 3) {
-//      Serial.println("motor 3");
-//      digitalWrite(feeder_motor3, HIGH);
-//      delay(5000);
-//      digitalWrite(feeder_motor3, LOW);
-////      int mode = Serial.parseInt();
-////      if (mode == 0) {
-////        digitalWrite(feeder_motor3, LOW);
-////      } else {
-////        digitalWrite(feeder_motor3, HIGH);
-////      }
-//    } else if (servo_id == 4) {
-//      Serial.println("motor 4");
-//      
-//      digitalWrite(feeder_motor4, HIGH);
-//      delay(5000);
-//      digitalWrite(feeder_motor4, LOW);
-////      int mode = Serial.parseInt();
-////      if (mode == 0) {
-////        digitalWrite(feeder_motor4, LOW);
-////      } else {
-////        digitalWrite(feeder_motor4, HIGH);
-////      }
-//    }
   }
-  led_controller.ir_decode();
+  led_controller->ir_decode();
 }
