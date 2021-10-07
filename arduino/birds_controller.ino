@@ -9,13 +9,11 @@ class LedController {
     /*
    * incoming commands:
    * 10 - get state
-   * 10_0 - set state to 0
-   * 11 - get led_value
-   * 11_0 - set led_value
+   * 11 0 - set state to value
+   * 12 5 - set led_value to value
    * 
    * outcomming commands:
-   * 0_0 - state is 0
-   * 1_0 - led_value is 0
+   * 0_0 - first number - led_state, second number - led_value
    */
     private:
     public:
@@ -237,18 +235,6 @@ class DrinkerController {
 };
 
 
-
-//const int pin_servo1 = 3;
-//const int pin_servo2 = 5;
-//const int feeder_motor3 = 2;
-//const int feeder_motor4 = 4;
-//
-//
-//int angle1 = 0;
-//int angle2 = 0;
-//int dir = 1;
-
-
 void setup() {
     Serial.begin(115200);
 
@@ -262,21 +248,37 @@ void setup() {
     // drinker control
     DrinkerController drinker_controller1(8, 9);
     DrinkerController drinker_controller2(10, 11);
-//
-//  
-////  valve1.attach(pin_servo, 500, 2500); // mg995 600-2000 µs
-//  
-//  valve1.attach(pin_servo1, 400, 2500); // mg90s 400-2400 µs
-//  valve2.attach(pin_servo2, 400, 2500); // mg90s 400-2400 µs
-//  pinMode(feeder_motor3, OUTPUT);
-//  pinMode(feeder_motor4, OUTPUT);
-//  
-//  delay(10);
-////  angle = valve1.read();
 }
 
 void loop() {
   if (Serial.available()) {
+      int command_id = Serial.parseInt();
+      switch (command_id) {
+          case 10: {
+              if (led_controller.led_state) {
+                  Serial.print("1_");
+              } else {
+                  Serial.print("0_");
+              }
+              Serial.print(led_controller.led_value);
+              Serial.print("\r\n");
+              break;
+          }
+          case 11: {
+              int argument = Serial.parseInt();
+              led_controller.set_led_state(argument);
+              break;
+          }
+          case 11: {
+              int argument = Serial.parseInt();
+              led_controller.set_led_value(argument);
+              break;
+          }
+          case 20: {
+              
+          }
+      }
+    
 //    int servo_id = Serial.parseInt();
 //    if (servo_id == 1) {
 //      angle1 = Serial.parseInt();
