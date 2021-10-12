@@ -1,6 +1,6 @@
-#include "IRremote.h"
+ #include "IRremote.h"
 #include <Servo.h>
-#include "ThreadHandler.h"
+//#include "ThreadHandler.h"
 
 // leds control
 #define DELAY_AFTER_SEND 20
@@ -41,16 +41,17 @@ class LedController {
             this->ir_pin = ir_pin;
             this->led_pin = led_pin;
             this->led_step = led_step;
-            
-            pinMode(this->led_pin, OUTPUT);
-            IrReceiver.begin(this->ir_pin);
-            
-            this->set_led();
         };
+
+        void setup() {
+            pinMode(this->led_pin, OUTPUT);
+            IrReceiver.begin(this->ir_pin, ENABLE_LED_FEEDBACK);
+            this->set_led();
+        }
     
         void set_led() {
             if (this->led_state) {
-                analogWrite(this-led_pin, this->led_value);
+                analogWrite(this->led_pin, this->led_value);
             } else {
                 analogWrite(this->led_pin, 0);
             }
@@ -104,9 +105,9 @@ class LedController {
                         }
                     }
                 }
+                delay(this->IR_DELAY_AFTER_RECIEVE);
+                IrReceiver.resume();
             }
-            delay(IR_DELAY_AFTER_RECIEVE);
-            IrReceiver.resume();
         }
 };
 
@@ -140,6 +141,7 @@ class ServoController {
         void write(int angle) {
             this->servo_angle = angle;
             this->servo.write(this->servo_angle);
+            delay(100);
         }
 };
 
@@ -175,6 +177,10 @@ class FeederController {
             this->feeder_motor_pin = feeder_motor_pin;
             pinMode(this->feeder_motor_pin, OUTPUT);
         };
+        
+        void setup() {
+            
+        }
 
         void feed(int motor_delay = -1) {
             digitalWrite(this->feeder_motor_pin, HIGH);
@@ -267,12 +273,13 @@ void setup() {
     Serial.begin(115200);
 
     // led control
-    led_controller = new LedController(2, 3);
+    led_controller = new LedController(2, 4); // ir_pin = 2 (490Hz), led_pin = 4 (980Hz)
+    led_controller->setup();
 
     // feeder control
-    feeder_controllers = new FeederController*[2];
-    feeder_controllers[0] = new FeederController(4, 5);
-    feeder_controllers[1] = new FeederController(6, 7);
+    feeder_controllers = new FeederController*[2]; 
+    feeder_controllers[0] = new FeederController(6, 3); // box_pin = 6, motor_pin = 3 
+    feeder_controllers[1] = new FeederController(7, 5); // box_pin = 7, motor_pin = 5
 
     // drinker control
     drinker_controllers = new DrinkerController*[2];
@@ -282,7 +289,6 @@ void setup() {
 
 
 void loop() {
-  // TODO: https://arduino.stackexchange.com/questions/439/why-does-starting-the-serial-monitor-restart-the-sketch
   if (Serial.available()) {
       int command_id = Serial.parseInt();
       switch (command_id) {
@@ -298,6 +304,7 @@ void loop() {
           }
           case 11: {
               int argument = Serial.parseInt();
+              Serial.println(argument);
               if (argument == 1) {
                   led_controller->set_led_state(false);
               } else if (argument == 2){
@@ -329,6 +336,7 @@ void loop() {
                       break;
                   }
               }
+              break;
           }
           case 21: {
               int argument1 = Serial.parseInt();
@@ -336,17 +344,18 @@ void loop() {
               switch (argument1) {
                   case 1: {
                       if (argument2 > 0) {
-                          feeder_controllers[0]->feeder_box_controller->write(argument2);
+                          feeder_controllers[0]->set_feeder_box_angle(argument2);
                       }
                       break;
                   }
                   case 2: {
                       if (argument2 > 0) {
-                          feeder_controllers[1]->feeder_box_controller->write(argument2);
+                          feeder_controllers[1]->set_feeder_box_angle(argument2);
                       }
                       break;
                   }
               }
+              break;
           }
           case 22: {
               int argument = Serial.parseInt();
@@ -360,6 +369,7 @@ void loop() {
                       break;
                   }
               }
+              break;
           }
           case 23: {
               int argument1 = Serial.parseInt();
@@ -378,6 +388,7 @@ void loop() {
                       break;
                   }
               }
+              break;
           }
 
           case 30: {
@@ -400,6 +411,7 @@ void loop() {
                       break;
                   }
               }
+              break;
           }
           case 31: {
               int argument1 = Serial.parseInt();
@@ -418,6 +430,7 @@ void loop() {
                       break;
                   }
               }
+              break;
           }
           case 32: {
               int argument1 = Serial.parseInt();
@@ -436,6 +449,7 @@ void loop() {
                       break;
                   }
               }
+              break;
           }
           default: {
             Serial.println("unsupported");
