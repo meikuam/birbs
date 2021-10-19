@@ -111,6 +111,10 @@ class LedController {
         }
 };
 
+const int MG995_MIN_PWM = 400;
+const int MG995_MAX_PWM = 2400;
+const int MG90S_MIN_PWM = 400;
+const int MG90S_MAX_PWM = 2400; 
 // feeder controler
 class ServoController {
   /*
@@ -226,23 +230,23 @@ class DrinkerController {
         DrinkerController(
           uint8_t input_pin, 
           uint8_t output_pin,
-          int input_open_angle=120,
-          int input_close_angle=0,
-          int output_open_angle=120,
-          int output_close_angle=0) {
+          int input_open_angle=-1,
+          int input_close_angle=-1,
+          int output_open_angle=-1,
+          int output_close_angle=-1) {
             this->input_open_angle = input_open_angle;
             this->input_close_angle = input_close_angle;
             this->output_open_angle = output_open_angle;
             this->output_close_angle = output_close_angle;
-            this->input_controller = new ServoController(input_pin);
-            this->output_controller = new ServoController(output_pin);
+            this->input_controller = new ServoController(input_pin, this->input_close_angle, MG995_MIN_PWM, MG995_MAX_PWM);
+            this->output_controller = new ServoController(output_pin, this->output_open_angle, MG995_MIN_PWM, MG995_MAX_PWM);
         };
 
         void set_input_angle(int angle) {
             this->input_controller->write(angle);
         }
         void set_output_angle(int angle) {
-            this->input_controller->write(angle);
+            this->output_controller->write(angle);
         }
         void open_input() {
           this->set_input_angle(this->input_open_angle);
@@ -283,8 +287,8 @@ void setup() {
 
     // drinker control
     drinker_controllers = new DrinkerController*[2];
-    drinker_controllers[0] = new DrinkerController(8, 9);
-    drinker_controllers[1] = new DrinkerController(10, 11);
+    drinker_controllers[0] = new DrinkerController(8, 9, 60, 150, 60, 135); // input_pin, output_pin, input_open, input_close, output_open, output_close
+    drinker_controllers[1] = new DrinkerController(11, 10, 60, 150, 60, 135);
 }
 
 
@@ -419,13 +423,13 @@ void loop() {
               switch (argument1) {
                   case 1: {
                       if (argument2 > 0) {
-                          drinker_controllers[0]->input_controller->write(argument2);
+                          drinker_controllers[0]->set_input_angle(argument2);
                       }
                       break;
                   }
                   case 2: {
                       if (argument2 > 0) {
-                          drinker_controllers[1]->input_controller->write(argument2);
+                          drinker_controllers[1]->set_input_angle(argument2);
                       }
                       break;
                   }
@@ -438,13 +442,13 @@ void loop() {
               switch (argument1) {
                   case 1: {
                       if (argument2 > 0) {
-                          drinker_controllers[0]->output_controller->write(argument2);
+                          drinker_controllers[0]->set_output_angle(argument2);
                       }
                       break;
                   }
                   case 2: {
                       if (argument2 > 0) {
-                          drinker_controllers[1]->output_controller->write(argument2);
+                          drinker_controllers[1]->set_output_angle(argument2);
                       }
                       break;
                   }
