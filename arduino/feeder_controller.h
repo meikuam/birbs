@@ -4,16 +4,6 @@
 
 
 class FeederController {
-      /*
-     * incoming commands:
-     * 20 1 - get feeder box angle for first instance
-     * 21 1 0 - set feeder box to angle for first instance
-     * 22 1- enable feeder gate
-     * 23 1 0 - enable feeder gate for number ms
-     * 
-     * outcomming commands:
-     * 1_0 - feeder box angle for first instance
-     */
     private:
     public:
         ServoController* feeder_box_controller;
@@ -23,7 +13,11 @@ class FeederController {
         ServoController* feeder_gate_controller;
         int feeder_gate_open_angle;
         int feeder_gate_close_angle;
-        int feeder_gate_delay=100;
+        int feeder_gate_delay = 100;
+        int feeder_gate_delay_cache = 100;
+        bool feed_flag = false;
+        unsigned long time_val;
+
 
         FeederController(
           uint8_t feeder_box_pin, 
@@ -55,6 +49,20 @@ class FeederController {
             
         }
         
+        void loop() {
+          if (feed_flag) {
+            if (abs(millis() - time_val) >= feeder_gate_delay_cache) {
+                feeder_gate_close();
+                feed_flag = false;
+            }
+          }
+        }
+        void feed_async(int gate_delay = -1) {
+          feeder_gate_delay_cache = gate_delay;
+          feed_flag = true;
+          time_val = millis();
+          feeder_gate_open();
+        }
         void feed(int gate_delay = -1) {
             feeder_gate_open();
             delay(gate_delay > 0 ? gate_delay : this->feeder_gate_delay);
