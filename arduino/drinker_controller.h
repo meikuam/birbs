@@ -1,18 +1,12 @@
 #pragma once
 #include "servo_controller.h"
 #define ROUNDING_ENABLED true
+#define US_ROUNDTRIP_MM 5.7f
 #include <NewPing.h>
 
 // drinker control
 class DrinkerController {
-        /*
-     * incoming commands:
-     * 30 1 - get drinker valves states for first instance
-     * 31 1 0 - set drinker valve state (angle) for input of first instance
-     * 32 1 0 - set drinker valve state (angle) for output of first instance
-     * outcomming commands:
-     * 1_0_0 - values for valves of first instance
-     */
+  
     private:
     public:
         ServoController* input_controller;
@@ -25,9 +19,13 @@ class DrinkerController {
         NewPing* water_level_sonar;
         uint8_t water_level_trigger_pin;
         uint8_t water_level_echo_pin;
+        int water_level_current = -1;
         int water_level_measure_iterations = 10;
         int water_level_max_cm_distance = 10;
-        int water_level_current = -1;
+        int water_level_max_level = -1;
+        int water_level_min_level = -1;
+        bool empty_flag = false;
+        bool fill_flag = false;
 
         DrinkerController(
           uint8_t input_pin, 
@@ -69,13 +67,37 @@ class DrinkerController {
         }
         void loop() {
             this->water_level_measure();
+            if (empty_flag) {
+              fill_flag = false;
+              this->input_close();
+              this->output_open();
+              if (this->water_level_current >= this->water_level_min_level) {
+                this->output_close();
+                empty_flag = false;
+              }
+            }
+            if (fill_flag) {
+              empty_flag = false;
+              this->output_close();
+              this->input_open();
+              
+              if (this->water_level_current <= this->water_level_max_level) {
+                this->input_close();
+                fill_flag = false;
+              }
+            }
         }
 
         int water_level_measure() {
-            this->water_level_current = this->water_level_sonar->convert_cm(
+            this->water_level_current = NewPingConvert(
                 this->water_level_sonar->ping_median(
                     this->water_level_measure_iterations,
-                    this->water_level_max_cm_distance));
+                    this->water_level_max_cm_distance),
+                US_ROUNDTRIP_MM);
+//            this->water_level_current = this->water_level_sonar->convert_cm(
+//                this->water_level_sonar->ping_median(
+//                    this->water_level_measure_iterations,
+//                    this->water_level_max_cm_distance));
             return this->water_level_current;
         }
 
@@ -96,6 +118,14 @@ class DrinkerController {
         }
         void output_close() {
           this->output_set_angle(this->output_close_angle);
+        }
+        void fill_async() {
+          empty_flag = false;
+          fill_flag = true;
+        }
+        void empty_async() {
+          empty_flag = true;
+          fill_flag = false;
         }
         
 };
