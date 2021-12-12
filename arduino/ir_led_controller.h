@@ -5,16 +5,6 @@
 
  // leds control
 class LedController {
-
-    /*
-   * incoming commands:
-   * 10 - get state
-   * 11 1 - set state to value (possible 1 - off, 2 - on)
-   * 12 5 - set led_value to value (possible 1 - 255)
-   * 
-   * outcomming commands:
-   * 0_0 - first number - led_state, second number - led_value
-   */
     private:
     public:
         const uint16_t IR_ADDRESS = 0x0080;
@@ -26,7 +16,7 @@ class LedController {
             0xA,  // slow        // 4
             0x1F  // rapide      // 5
         };
-        const uint8_t IR_DELAY_AFTER_RECIEVE = 200;
+        const uint8_t IR_DELAY_AFTER_RECIEVE = 10;
         uint8_t ir_pin;
         uint8_t led_pin;
       
@@ -47,7 +37,9 @@ class LedController {
             IrReceiver.begin(this->ir_pin, ENABLE_LED_FEEDBACK);
             this->set_led();
         }
-    
+        void loop() {
+            this->ir_decode();
+        }
         void set_led() {
             if (this->led_state) {
                 analogWrite(this->led_pin, this->led_value);
