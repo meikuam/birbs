@@ -34,9 +34,14 @@ class ServoController {
             }
         };
 
-        void write(int angle) {
-            this->servo_angle = angle;
-            this->servo.write(this->servo_angle);
-            delay(100);
+        void write(int angle, bool smart = false) {
+            if (smart) {
+              // TODO: make smart positioning of servo (to avoid jitter, shaking...)
+                this->servo_angle = angle;
+                this->servo.write(this->servo_angle);
+            } else {
+                this->servo_angle = angle;
+                this->servo.write(this->servo_angle);
+            }
         }
 };
