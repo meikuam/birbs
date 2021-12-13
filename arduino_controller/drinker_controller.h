@@ -71,10 +71,10 @@ class DrinkerController: public Thread {
         }
 
         void reset() {
-            this->input_close();
-            this->output_open();
             this->fill_flag = false;
             this->empty_flag = false;
+            this->input_close();
+            this->output_open();
         }
         
         virtual void run() {

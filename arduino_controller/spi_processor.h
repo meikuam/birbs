@@ -55,7 +55,7 @@ enum CommandSet {
   COMMAND_DRINKER_FILL = 0x3E,
   COMMAND_DRINKER_EMPTY = 0x3F,
   COMMAND_DRINKER_RESET = 0x40
-}
+};
 
 enum CommandResponseStatus {
   COMMAND_RESPONSE_SELECT_SUCCESS = 0x69,
@@ -105,6 +105,57 @@ class SPIProcessor {
       this->command_id = 0x00;
       this->data_storage = new DataStorage(data_storage_size);
     };
+    
+    void slave_init() {
+          /*  
+         * Setup SPI control register SPCR
+         * SPCR
+         * | 7    | 6    | 5    | 4    | 3    | 2    | 1    | 0    |
+         * | SPIE | SPE  | DORD | MSTR | CPOL | CPHA | SPR1 | SPR0 |
+         * SPIE - Enables the SPI interrupt when 1 
+         * SPE - Enables the SPI when 1
+         * DORD - Sends data least Significant Bit First when 1, most Significant Bit first when 0
+         * MSTR - Sets the Arduino in master mode when 1, slave mode when 0 
+         * CPOL - Sets the data clock to be idle when high if set to 1, idle when low if set to 0
+         * CPHA - Samples data on the trailing edge of the data clock when 1, leading edge when 0
+         * SPR1 and SPR0 - Sets the SPI speed, 00 is fastest (4MHz) 11 is slowest (250KHz)   - in slave mode ignored
+         */
+  
+         /*
+          * SPI mode:
+          * Mode       Clock Polarity (CPOL) Clock Phase (CPHA)  Output Edge   Data Capture
+          * SPI_MODE0  0                     0                   Falling       Rising
+          * SPI_MODE1  0                     1                   Rising        Falling
+          * SPI_MODE2  1                     0                   Rising        Falling
+          * SPI_MODE3  1                     1                   Falling       Rising
+          * 
+          * SPSR - (Status Register)
+          * SPIF  WCOL  - - - - - -
+          * SPIF - SPI Interrupt Flag set to 1 if SPIE set to 1 generates interrrupt 
+          * WCOL - Write Collision flag set to 1 if while transfer data SPDR register was writed
+          * 
+          * 
+          * SPDR - (SPI Data Register)
+          */
+          
+      pinMode(SCK_PIN, INPUT);
+      pinMode(MOSI_PIN, INPUT);
+      pinMode(MISO_PIN, OUTPUT);
+      pinMode(SS_PIN, INPUT_PULLUP);
+    
+  
+      bitSet(SPCR, SPIE);
+      bitSet(SPCR, SPE);
+      bitClear(SPCR, DORD);
+      bitClear(SPCR, MSTR);
+      
+      // use SPI_MODE0
+      bitClear(SPCR, CPOL);
+      bitClear(SPCR, CPHA);
+      
+      bitSet(SPCR, SPR0);
+      bitClear(SPCR, SPR1);
+  }
   
     uint8_t process_interrupt(uint8_t spdr) {
       uint8_t spdr_buffer = spdr;
@@ -397,624 +448,390 @@ class SPIProcessor {
             return COMMAND_RESPONSE_PROCESSING_SUCCESS;
           }
           case COMMAND_FEEDER_GET_SERVO_ANGLE: { // get feeder servo angle
-            switch (this->data_storage->data[0) {
-              case 0x1: {
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->feeder_controllers_len) {
                 this->data_storage->reset();
-                this->data_storage->add(this->feeder_controllers[0]->feeder_box_controller->servo_angle);
-                this->data_storage->add(this->feeder_controllers[0]->feeder_gate_controller->servo_angle);
+                this->data_storage->add(this->feeder_controllers[index]->feeder_box_controller->servo_angle);
+                this->data_storage->add(this->feeder_controllers[index]->feeder_gate_controller->servo_angle);
                 this->command_status = COMMAND_STATUS_RESPONSE;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->data_storage->reset();
-                this->data_storage->add(this->feeder_controllers[1]->feeder_box_controller->servo_angle);
-                this->data_storage->add(this->feeder_controllers[1]->feeder_gate_controller->servo_angle);
-                this->command_status = COMMAND_STATUS_RESPONSE;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_FEEDER_BOX_GET_SERVO_OPEN_CLOSE_ANGLES: { // get feeder_box open and close angles
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->feeder_controllers_len) {
                 this->data_storage->reset();
-                this->data_storage->add(this->feeder_controllers[0]->feeder_box_open_angle);
-                this->data_storage->add(this->feeder_controllers[0]->feeder_box_close_angle);
+                this->data_storage->add(this->feeder_controllers[index]->feeder_box_open_angle);
+                this->data_storage->add(this->feeder_controllers[index]->feeder_box_close_angle);
                 this->command_status = COMMAND_STATUS_RESPONSE;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->data_storage->reset();
-                this->data_storage->add(this->feeder_controllers[1]->feeder_box_open_angle);
-                this->data_storage->add(this->feeder_controllers[1]->feeder_box_close_angle);
-                this->command_status = COMMAND_STATUS_RESPONSE;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_FEEDER_BOX_SET_SERVO_OPEN_CLOSE_ANGLES: { // set feeder_box open and close angles
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
-                this->feeder_controllers[0]->feeder_box_open_angle = this->data_storage->data[1];
-                this->feeder_controllers[0]->feeder_box_close_angle = this->data_storage->data[2];
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->feeder_controllers_len) {
+                this->feeder_controllers[index]->feeder_box_open_angle = this->data_storage->data[1];
+                this->feeder_controllers[index]->feeder_box_close_angle = this->data_storage->data[2];
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->feeder_controllers[1]->feeder_box_open_angle = this->data_storage->data[1];
-                this->feeder_controllers[1]->feeder_box_close_angle = this->data_storage->data[2];
-                this->command_status = COMMAND_STATUS_SELECT;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_FEEDER_GATE_GET_SERVO_OPEN_CLOSE_ANGLES: {  // get feeder_gate open and close angles
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->feeder_controllers_len) {
                 this->data_storage->reset();
-                this->data_storage->add(this->feeder_controllers[0]->feeder_gate_open_angle);
-                this->data_storage->add(this->feeder_controllers[0]->feeder_gate_close_angle);
+                this->data_storage->add(this->feeder_controllers[index]->feeder_gate_open_angle);
+                this->data_storage->add(this->feeder_controllers[index]->feeder_gate_close_angle);
                 this->command_status = COMMAND_STATUS_RESPONSE;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->data_storage->reset();
-                this->data_storage->add(this->feeder_controllers[1]->feeder_gate_open_angle);
-                this->data_storage->add(this->feeder_controllers[1]->feeder_gate_close_angle);
-                this->command_status = COMMAND_STATUS_RESPONSE;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_FEEDER_GATE_SET_SERVO_OPEN_CLOSE_ANGLES: { // set feeder_gate open and close angles
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
-                this->feeder_controllers[0]->feeder_gate_open_angle = this->data_storage->data[1];
-                this->feeder_controllers[0]->feeder_gate_close_angle = this->data_storage->data[2];
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->feeder_controllers_len) {
+                this->feeder_controllers[index]->feeder_gate_open_angle = this->data_storage->data[1];
+                this->feeder_controllers[index]->feeder_gate_close_angle = this->data_storage->data[2];
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->feeder_controllers[1]->feeder_gate_open_angle = this->data_storage->data[1];
-                this->feeder_controllers[1]->feeder_gate_close_angle = this->data_storage->data[2];
-                this->command_status = COMMAND_STATUS_SELECT;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_FEEDER_BOX_OPEN: { // feeder box open
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
-                this->feeder_controllers[0]->feeder_box_open();
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->feeder_controllers_len) {
+                this->feeder_controllers[index]->feeder_box_open();
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->feeder_controllers[1]->feeder_box_open();
-                this->command_status = COMMAND_STATUS_SELECT;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_FEEDER_BOX_CLOSE: { // feeder box close
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
-                this->feeder_controllers[0]->feeder_box_close();
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->feeder_controllers_len) {
+                this->feeder_controllers[index]->feeder_box_close();
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->feeder_controllers[1]->feeder_box_close();
-                this->command_status = COMMAND_STATUS_SELECT;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_FEEDER_BOX_SET_ANGLE: { // feeder box set angle
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
-                this->feeder_controllers[0]->feeder_box_set_angle(this->data_storage->data[1]);
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->feeder_controllers_len) {
+                this->feeder_controllers[index]->feeder_box_set_angle(this->data_storage->data[1]);
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->feeder_controllers[1]->feeder_box_set_angle(this->data_storage->data[1]);
-                this->command_status = COMMAND_STATUS_SELECT;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_FEEDER_GATE_FEED: {// feeder gate feed for ms
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
-                this->feeder_controllers[0]->feed_async();
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->feeder_controllers_len) {
+                this->feeder_controllers[index]->feed_async();;
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->feeder_controllers[1]->feed_async();
-                this->command_status = COMMAND_STATUS_SELECT;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_FEEDER_GATE_FEED_MS: {// feeder gate feed for ms
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->feeder_controllers_len) {
                 int feed_delay = (int)this->data_storage->data[1]<<8 | (int)this->data_storage->data[2];
-                this->feeder_controllers[0]->feed_async(feed_delay);
+                this->feeder_controllers[index]->feed_async(feed_delay);
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                int feed_delay = (int)this->data_storage->data[1]<<8 | (int)this->data_storage->data[2];
-                this->feeder_controllers[1]->feed_async(feed_delay);
-                this->command_status = COMMAND_STATUS_SELECT;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_FEEDER_GATE_SET_ANGLE: { // feeder gate set angle
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
-                this->feeder_controllers[0]->feeder_gate_set_angle(this->data_storage->data[1]);
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->feeder_controllers_len) {
+                this->feeder_controllers[index]->feeder_gate_set_angle(this->data_storage->data[1]);
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->feeder_controllers[1]->feeder_gate_set_angle(this->data_storage->data[1]);
-                this->command_status = COMMAND_STATUS_SELECT;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+              
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_FEEDER_GATE_OPEN: { // feeder gate open
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
-                this->feeder_controllers[0]->feeder_gate_open();
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->feeder_controllers_len) {
+                this->feeder_controllers[index]->feeder_gate_open();
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->feeder_controllers[1]->feeder_gate_open();
-                this->command_status = COMMAND_STATUS_SELECT;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+              
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_FEEDER_GATE_CLOSE: { // feeder gate close
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
-                this->feeder_controllers[0]->feeder_gate_close();
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->feeder_controllers_len) {
+                this->feeder_controllers[index]->feeder_gate_close();
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->feeder_controllers[1]->feeder_gate_close();
-                this->command_status = COMMAND_STATUS_SELECT;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_DRINKER_GET_PARAMS: { // get drinker servo angle
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->drinker_controllers_len) {
                 this->data_storage->reset();
-                this->data_storage->add(this->drinker_controllers[0]->input_controller->servo_angle);
-                this->data_storage->add(this->drinker_controllers[0]->output_controller->servo_angle);
-                this->data_storage->add(this->drinker_controllers[0]->water_level_current);
+                this->data_storage->add(this->drinker_controllers[index]->input_controller->servo_angle);
+                this->data_storage->add(this->drinker_controllers[index]->output_controller->servo_angle);
+                this->data_storage->add(this->drinker_controllers[index]->water_level_current);
                 this->command_status = COMMAND_STATUS_RESPONSE;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->data_storage->reset();
-                this->data_storage->add(this->drinker_controllers[1]->input_controller->servo_angle);
-                this->data_storage->add(this->drinker_controllers[1]->output_controller->servo_angle);
-                this->data_storage->add(this->drinker_controllers[1]->water_level_current);
-                this->command_status = COMMAND_STATUS_RESPONSE;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_DRINKER_INPUT_GET_OPEN_CLOSE_ANGLES: { // get drinker input open and close angles
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->drinker_controllers_len) {
                 this->data_storage->reset();
-                this->data_storage->add(this->drinker_controllers[0]->input_open_angle);
-                this->data_storage->add(this->drinker_controllers[0]->input_close_angle);
+                this->data_storage->add(this->drinker_controllers[index]->input_open_angle);
+                this->data_storage->add(this->drinker_controllers[index]->input_close_angle);
                 this->command_status = COMMAND_STATUS_RESPONSE;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->data_storage->reset();
-                this->data_storage->add(this->drinker_controllers[1]->input_open_angle);
-                this->data_storage->add(this->drinker_controllers[1]->input_close_angle);
-                this->command_status = COMMAND_STATUS_RESPONSE;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_DRINKER_INPUT_SET_OPEN_CLOSE_ANGLES: { // set drinker input open and close angles
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
-                this->drinker_controllers[0]->input_open_angle = this->data_storage->data[1];
-                this->drinker_controllers[0]->input_close_angle = this->data_storage->data[2];
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->drinker_controllers_len) {
+                this->drinker_controllers[index]->input_open_angle = this->data_storage->data[1];
+                this->drinker_controllers[index]->input_close_angle = this->data_storage->data[2];
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->drinker_controllers[1]->input_open_angle = this->data_storage->data[1];
-                this->drinker_controllers[1]->input_close_angle = this->data_storage->data[2];
-                this->command_status = COMMAND_STATUS_SELECT;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_DRINKER_OUTPUT_GET_OPEN_CLOSE_ANGLES: { // get drinker output open and close angles
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->drinker_controllers_len) {
                 this->data_storage->reset();
-                this->data_storage->add(this->drinker_controllers[0]->output_open_angle);
-                this->data_storage->add(this->drinker_controllers[0]->output_close_angle);
+                this->data_storage->add(this->drinker_controllers[index]->output_open_angle);
+                this->data_storage->add(this->drinker_controllers[index]->output_close_angle);
                 this->command_status = COMMAND_STATUS_RESPONSE;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->data_storage->reset();
-                this->data_storage->add(this->drinker_controllers[1]->output_open_angle);
-                this->data_storage->add(this->drinker_controllers[1]->output_close_angle);
-                this->command_status = COMMAND_STATUS_RESPONSE;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_DRINKER_OUTPUT_SET_OPEN_CLOSE_ANGLES: { // set drinker output open and close angles
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
-                this->drinker_controllers[0]->output_open_angle = this->data_storage->data[1];
-                this->drinker_controllers[0]->output_close_angle = this->data_storage->data[2];
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->drinker_controllers_len) {
+                this->drinker_controllers[index]->output_open_angle = this->data_storage->data[1];
+                this->drinker_controllers[index]->output_close_angle = this->data_storage->data[2];
                 this->command_status = COMMAND_STATUS_SELECT;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->drinker_controllers[1]->output_open_angle = this->data_storage->data[1];
-                this->drinker_controllers[1]->output_close_angle = this->data_storage->data[2];
-                this->command_status = COMMAND_STATUS_SELECT;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+                return COMMAND_RESPONSE_PROCESSING_SUCCESS;              
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_DRINKER_WATER_LEVEL_GET_PARAMS: { // get drinker water level params
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->drinker_controllers_len) {
                 this->data_storage->reset();
-                this->data_storage->add(this->drinker_controllers[0]->water_level_measure_iterations);
-                this->data_storage->add(this->drinker_controllers[0]->water_level_max_cm_distance);
-                this->data_storage->add(this->drinker_controllers[0]->water_level_max_level);
-                this->data_storage->add(this->drinker_controllers[0]->water_level_min_level);
+                this->data_storage->add(this->drinker_controllers[index]->water_level_measure_iterations);
+                this->data_storage->add(this->drinker_controllers[index]->water_level_max_cm_distance);
+                this->data_storage->add(this->drinker_controllers[index]->water_level_max_level);
+                this->data_storage->add(this->drinker_controllers[index]->water_level_min_level);
                 this->command_status = COMMAND_STATUS_RESPONSE;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->data_storage->reset();
-                this->data_storage->add(this->drinker_controllers[1]->water_level_measure_iterations);
-                this->data_storage->add(this->drinker_controllers[1]->water_level_max_cm_distance);
-                this->data_storage->add(this->drinker_controllers[1]->water_level_max_level);
-                this->data_storage->add(this->drinker_controllers[1]->water_level_min_level);
-                this->command_status = COMMAND_STATUS_RESPONSE;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_DRINKER_WATER_LEVEL_SET_PARAMS: { // set drinker water level params
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
-                this->drinker_controllers[0]->water_level_measure_iterations = this->data_storage->data[1];
-                this->drinker_controllers[0]->water_level_max_cm_distance = this->data_storage->data[2];
-                this->drinker_controllers[0]->water_level_max_level = this->data_storage->data[3];
-                this->drinker_controllers[0]->water_level_min_level = this->data_storage->data[4];
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->drinker_controllers_len) {
+                this->drinker_controllers[index]->water_level_measure_iterations = this->data_storage->data[1];
+                this->drinker_controllers[index]->water_level_max_cm_distance = this->data_storage->data[2];
+                this->drinker_controllers[index]->water_level_max_level = this->data_storage->data[3];
+                this->drinker_controllers[index]->water_level_min_level = this->data_storage->data[4];
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->drinker_controllers[1]->water_level_measure_iterations = this->data_storage->data[1];
-                this->drinker_controllers[1]->water_level_max_cm_distance = this->data_storage->data[2];
-                this->drinker_controllers[1]->water_level_max_level = this->data_storage->data[3];
-                this->drinker_controllers[1]->water_level_min_level = this->data_storage->data[4];
-                this->command_status = COMMAND_STATUS_SELECT;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_DRINKER_WATER_LEVEL_GET_CURRENT: { // get drinker water level params
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->drinker_controllers_len) {
                 this->data_storage->reset();
-                this->data_storage->add(this->drinker_controllers[0]->water_level_current);
+                this->data_storage->add(this->drinker_controllers[index]->water_level_current);
                 this->command_status = COMMAND_STATUS_RESPONSE;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->data_storage->reset();
-                this->data_storage->add(this->drinker_controllers[1]->water_level_current);
-                this->command_status = COMMAND_STATUS_RESPONSE;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_DRINKER_INPUT_OPEN: { // drinker input open
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
-                this->drinker_controllers[0]->input_open();
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->drinker_controllers_len) {
+                this->drinker_controllers[index]->input_open();
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->drinker_controllers[1]->input_open();
-                this->command_status = COMMAND_STATUS_SELECT;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_DRINKER_INPUT_CLOSE: { // drinker input close
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
-                this->drinker_controllers[0]->input_close();
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->drinker_controllers_len) {
+                this->drinker_controllers[index]->input_close();
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->drinker_controllers[1]->input_close();
-                this->command_status = COMMAND_STATUS_SELECT;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_DRINKER_INPUT_SET_ANGLE: { //  drinker input set angle
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
-                this->drinker_controllers[0]->input_set_angle(this->data_storage->data[1]);
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->drinker_controllers_len) {
+                this->drinker_controllers[index]->input_set_angle(this->data_storage->data[1]);
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->drinker_controllers[1]->input_set_angle(this->data_storage->data[1]);
-                this->command_status = COMMAND_STATUS_SELECT;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_DRINKER_OUTPUT_OPEN: { // drinker ouput open
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
-                this->drinker_controllers[0]->output_open();
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->drinker_controllers_len) {
+                this->drinker_controllers[index]->output_open();
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->drinker_controllers[1]->output_open();
-                this->command_status = COMMAND_STATUS_SELECT;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_DRINKER_OUTPUT_CLOSE: { // drinker output close
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
-                this->drinker_controllers[0]->output_close();
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->drinker_controllers_len) {
+                this->drinker_controllers[index]->output_close();
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->drinker_controllers[1]->output_close();
-                this->command_status = COMMAND_STATUS_SELECT;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_DRINKER_OUTPUT_SET_ANGLE: { //  drinker output set angle
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
-                this->drinker_controllers[0]->output_set_angle(this->data_storage->data[1]);
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->drinker_controllers_len) {
+                this->drinker_controllers[index]->output_set_angle(this->data_storage->data[1]);
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->drinker_controllers[1]->output_set_angle(this->data_storage->data[1]);
-                this->command_status = COMMAND_STATUS_SELECT;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_DRINKER_FILL: { // drinker fill
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
-                this->drinker_controllers[0]->fill_async();
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->drinker_controllers_len) {
+                this->drinker_controllers[index]->fill_async();
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->drinker_controllers[1]->fill_async();
-                this->command_status = COMMAND_STATUS_SELECT;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
           case COMMAND_DRINKER_EMPTY: { // drinker empty
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
-                this->drinker_controllers[0]->empty_async();
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->drinker_controllers_len) {
+                this->drinker_controllers[index]->empty_async();
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->drinker_controllers[1]->empty_async();
-                this->command_status = COMMAND_STATUS_SELECT;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
-          case COMMAND_DRINKER_RESET: { // drinker empty
-            switch (this->data_storage->data[0]) {
-              case 0x1: {
-                this->drinker_controllers[0]->reset();
+          case COMMAND_DRINKER_RESET: { // drinker reset
+            uint8_t index = this->data_storage->data[0];
+            if (0 < index && index <= this->drinker_controllers_len) {
+                this->drinker_controllers[index]->reset();
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              case 0x2: {
-                this->drinker_controllers[1]->reset();
-                this->command_status = COMMAND_STATUS_SELECT;
-                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
-              }
-              default: {
+            } else {
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
-              }
             }
             break;
           }
@@ -1038,54 +855,4 @@ class SPIProcessor {
       return spdr_buffer;
     }
     
-    void slave_init() {
-          /*  
-         * Setup SPI control register SPCR
-         * SPCR
-         * | 7    | 6    | 5    | 4    | 3    | 2    | 1    | 0    |
-         * | SPIE | SPE  | DORD | MSTR | CPOL | CPHA | SPR1 | SPR0 |
-         * SPIE - Enables the SPI interrupt when 1 
-         * SPE - Enables the SPI when 1
-         * DORD - Sends data least Significant Bit First when 1, most Significant Bit first when 0
-         * MSTR - Sets the Arduino in master mode when 1, slave mode when 0 
-         * CPOL - Sets the data clock to be idle when high if set to 1, idle when low if set to 0
-         * CPHA - Samples data on the trailing edge of the data clock when 1, leading edge when 0
-         * SPR1 and SPR0 - Sets the SPI speed, 00 is fastest (4MHz) 11 is slowest (250KHz)   - in slave mode ignored
-         */
-  
-         /*
-          * SPI mode:
-          * Mode       Clock Polarity (CPOL) Clock Phase (CPHA)  Output Edge   Data Capture
-          * SPI_MODE0  0                     0                   Falling       Rising
-          * SPI_MODE1  0                     1                   Rising        Falling
-          * SPI_MODE2  1                     0                   Rising        Falling
-          * SPI_MODE3  1                     1                   Falling       Rising
-          * 
-          * SPSR - (Status Register)
-          * SPIF  WCOL  - - - - - -
-          * SPIF - SPI Interrupt Flag set to 1 if SPIE set to 1 generates interrrupt 
-          * WCOL - Write Collision flag set to 1 if while transfer data SPDR register was writed
-          * 
-          * 
-          * SPDR - (SPI Data Register)
-          */
-          
-      pinMode(SCK_PIN, INPUT);
-      pinMode(MOSI_PIN, INPUT);
-      pinMode(MISO_PIN, OUTPUT);
-      pinMode(SS_PIN, INPUT_PULLUP);
-    
-  
-      bitSet(SPCR, SPIE);
-      bitSet(SPCR, SPE);
-      bitClear(SPCR, DORD);
-      bitClear(SPCR, MSTR);
-      
-      // use SPI_MODE0
-      bitClear(SPCR, CPOL);
-      bitClear(SPCR, CPHA);
-      
-      bitSet(SPCR, SPR0);
-      bitClear(SPCR, SPR1);
-  }
 };
