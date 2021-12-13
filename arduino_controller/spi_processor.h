@@ -65,7 +65,6 @@ enum CommandResponseStatus {
   COMMAND_RESPONSE_PROCESSING_SUCCESS = 0xAA,
   COMMAND_RESPONSE_PROCESSING_ERROR = 0xAB,
   COMMAND_RESPONSE_RESPONSE_ERROR = 0x54,
-  
 };
 
 
@@ -854,5 +853,4 @@ class SPIProcessor {
       }
       return spdr_buffer;
     }
-    
 };
