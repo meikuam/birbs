@@ -79,7 +79,7 @@ void setup()
   drinker_controllers[1]->setup();
     
   // spi init
-  spi_processor = new SPIProcessor(led_controller, feeder_controllers, drinker_controllers);
+  spi_processor = new SPIProcessor(led_controller, feeder_controllers, 2, drinker_controllers, 2);
   spi_processor->slave_init();
   
   //start executing threads

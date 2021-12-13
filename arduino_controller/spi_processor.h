@@ -17,6 +17,46 @@ enum CommandStatus {
   COMMAND_STATUS_RESPONSE
 };
 
+enum CommandSet {
+  COMMAND_LEDS_GET = 0x10,
+  COMMAND_LEDS_STATUS_SET = 0x11,
+  COMMAND_LEDS_VALUE_SET = 0x12,
+  
+  COMMAND_FEEDER_GET_SERVO_ANGLE = 0x20,
+  COMMAND_FEEDER_BOX_GET_SERVO_OPEN_CLOSE_ANGLES = 0x21,
+  COMMAND_FEEDER_BOX_SET_SERVO_OPEN_CLOSE_ANGLES = 0x22,
+  COMMAND_FEEDER_GATE_GET_SERVO_OPEN_CLOSE_ANGLES = 0x23,
+  COMMAND_FEEDER_GATE_SET_SERVO_OPEN_CLOSE_ANGLES = 0x24,
+  
+  COMMAND_FEEDER_BOX_OPEN = 0x25,
+  COMMAND_FEEDER_BOX_CLOSE = 0x26,
+  COMMAND_FEEDER_BOX_SET_ANGLE = 0x27,
+  
+  COMMAND_FEEDER_GATE_FEED = 0x28,
+  COMMAND_FEEDER_GATE_FEED_MS = 0x29,
+  COMMAND_FEEDER_GATE_SET_ANGLE = 0x2A,
+  COMMAND_FEEDER_GATE_OPEN = 0x2B,
+  COMMAND_FEEDER_GATE_CLOSE = 0x2C,
+  
+  COMMAND_DRINKER_GET_PARAMS = 0x30,
+  COMMAND_DRINKER_INPUT_GET_OPEN_CLOSE_ANGLES = 0x31,
+  COMMAND_DRINKER_INPUT_SET_OPEN_CLOSE_ANGLES = 0x32,
+  COMMAND_DRINKER_OUTPUT_GET_OPEN_CLOSE_ANGLES = 0x33,
+  COMMAND_DRINKER_OUTPUT_SET_OPEN_CLOSE_ANGLES = 0x34,
+  COMMAND_DRINKER_WATER_LEVEL_GET_PARAMS = 0x35,
+  COMMAND_DRINKER_WATER_LEVEL_SET_PARAMS = 0x36,
+  COMMAND_DRINKER_WATER_LEVEL_GET_CURRENT = 0x37,
+  COMMAND_DRINKER_INPUT_OPEN = 0x38,
+  COMMAND_DRINKER_INPUT_CLOSE = 0x39,
+  COMMAND_DRINKER_INPUT_SET_ANGLE = 0x3A,
+  COMMAND_DRINKER_OUTPUT_OPEN = 0x3B,
+  COMMAND_DRINKER_OUTPUT_CLOSE = 0x3C,
+  COMMAND_DRINKER_OUTPUT_SET_ANGLE = 0x3D,
+  COMMAND_DRINKER_FILL = 0x3E,
+  COMMAND_DRINKER_EMPTY = 0x3F,
+  COMMAND_DRINKER_RESET = 0x40
+}
+
 enum CommandResponseStatus {
   COMMAND_RESPONSE_SELECT_SUCCESS = 0x69,
   COMMAND_RESPONSE_SELECT_ERROR = 0x70,
@@ -38,10 +78,12 @@ class SPIProcessor {
     
     // feeder control
     FeederController** feeder_controllers;
+    uint8_t feeder_controllers_len;
     
     // drinker control
     DrinkerController** drinker_controllers;
-
+    uint8_t drinker_controllers_len;
+    
     uint8_t command_id;
   
     CommandStatus command_status;
@@ -49,12 +91,16 @@ class SPIProcessor {
     SPIProcessor(
       LedController* led_controller, 
       FeederController** feeder_controllers, 
+      uint8_t feeder_controllers_len,
       DrinkerController** drinker_controllers, 
+      uint8_t drinker_controllers_len,
       int data_storage_size=128) {
 
       this->led_controller = led_controller;
       this->feeder_controllers = feeder_controllers;
+      this->feeder_controllers_len = feeder_controllers_len;
       this->drinker_controllers = drinker_controllers;
+      this->drinker_controllers_len = drinker_controllers_len;
       this->command_status = COMMAND_STATUS_SELECT;
       this->command_id = 0x00;
       this->data_storage = new DataStorage(data_storage_size);
@@ -67,216 +113,230 @@ class SPIProcessor {
       //-----------------------------------------------------------------------
       if (this->command_status == COMMAND_STATUS_SELECT){
         switch(spdr_buffer) {
-          case 0x10: { // get leds status
-            this->command_id = 0x10;
+          case COMMAND_LEDS_GET: { // get leds status
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_PROCESSING;
             break;
           }
-          case 0x11: { // set leds on off
-            this->command_id = 0x11;
+          case COMMAND_LEDS_STATUS_SET: { // set leds on off
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 1;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x12: { // set leds value
-            this->command_id = 0x12;
+          case COMMAND_LEDS_VALUE_SET: { // set leds value
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 1;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x20: {  // get servo angle
-            this->command_id = 0x20;
+          case COMMAND_FEEDER_GET_SERVO_ANGLE: {  // get servo angle
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 1;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x21: {  // get feeder_box open and close angles
-            this->command_id = 0x21;
+          case COMMAND_FEEDER_BOX_GET_SERVO_OPEN_CLOSE_ANGLES: {  // get feeder_box open and close angles
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 1;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x22: {  // set feeder_box open and close angles
-            this->command_id = 0x22;
+          case COMMAND_FEEDER_BOX_SET_SERVO_OPEN_CLOSE_ANGLES: {  // set feeder_box open and close angles
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 3;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x23: {  // get feeder_gate open and close angles
-            this->command_id = 0x23;
+          case COMMAND_FEEDER_GATE_GET_SERVO_OPEN_CLOSE_ANGLES: {  // get feeder_gate open and close angles
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 1;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x24: {  // set feeder_gate open and close angles
-            this->command_id = 0x24;
+          case COMMAND_FEEDER_GATE_SET_SERVO_OPEN_CLOSE_ANGLES: {  // set feeder_gate open and close angles
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 3;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x25: {  // feeder box open
-            this->command_id = 0x25;
+          case COMMAND_FEEDER_BOX_OPEN: {  // feeder box open
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 1;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x26: {  // feeder box close
-            this->command_id = 0x26;
+          case COMMAND_FEEDER_BOX_CLOSE: {  // feeder box close
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 1;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x27: {  // feeder box set angle
-            this->command_id = 0x27;
+          case COMMAND_FEEDER_BOX_SET_ANGLE: {  // feeder box set angle
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 2;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x28: {  // feeder gate feed for ms
-            this->command_id = 0x28;
+          case COMMAND_FEEDER_GATE_FEED: {  // feeder gate feed for default ms
+            this->command_id = spdr_buffer;
+            this->command_status = COMMAND_STATUS_ARGUMENT;
+            this->data_storage->reset();
+            this->data_storage->data_length = 1;
+            return COMMAND_RESPONSE_SELECT_SUCCESS;
+          }
+          case COMMAND_FEEDER_GATE_FEED_MS: {  // feeder gate feed for ms
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 3;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x29: {  // feeder gate set angle
-            this->command_id = 0x29;
+          case COMMAND_FEEDER_GATE_SET_ANGLE: {  // feeder gate set angle
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 2;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x2A: {  // feeder gate open
-            this->command_id = 0x2A;
+          case COMMAND_FEEDER_GATE_OPEN: {  // feeder gate open
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 1;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x2B: {  // feeder gate close
-            this->command_id = 0x2B;
+          case COMMAND_FEEDER_GATE_CLOSE: {  // feeder gate close
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 1;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x30: {  // get drinker servo angle and water level current
-            this->command_id = 0x30;
+          case COMMAND_DRINKER_GET_PARAMS: {  // get drinker servo angle and water level current
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 1;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x31: {  // get drinker input open close angles
-            this->command_id = 0x31;
+          case COMMAND_DRINKER_INPUT_GET_OPEN_CLOSE_ANGLES: {  // get drinker input open close angles
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 1;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x32: {  // set drinker input open close angles
-            this->command_id = 0x32;
+          case COMMAND_DRINKER_INPUT_SET_OPEN_CLOSE_ANGLES: {  // set drinker input open close angles
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 3;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x33: {  // get drinker output open close angles
-            this->command_id = 0x33;
+          case COMMAND_DRINKER_OUTPUT_GET_OPEN_CLOSE_ANGLES: {  // get drinker output open close angles
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 1;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x34: {  // set drinker output open close angles
-            this->command_id = 0x34;
+          case COMMAND_DRINKER_OUTPUT_SET_OPEN_CLOSE_ANGLES: {  // set drinker output open close angles
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 3;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x35: {  // get drinker water level params
-            this->command_id = 0x35;
+          case COMMAND_DRINKER_WATER_LEVEL_GET_PARAMS: {  // get drinker water level params
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 1;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x36: {  // set drinker water level params
-            this->command_id = 0x36;
+          case COMMAND_DRINKER_WATER_LEVEL_SET_PARAMS: {  // set drinker water level params
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 5;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x37: {  // drinker input open
-            this->command_id = 0x37;
+          case COMMAND_DRINKER_WATER_LEVEL_GET_CURRENT: {  // drinker get water_level
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 1;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x38: {  // drinker input close
-            this->command_id = 0x38;
+          case COMMAND_DRINKER_INPUT_OPEN: {  // drinker input open
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 1;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x39: {  // drinker input set angle
-            this->command_id = 0x3A;
+          case COMMAND_DRINKER_INPUT_CLOSE: {  // drinker input close
+            this->command_id = spdr_buffer;
+            this->command_status = COMMAND_STATUS_ARGUMENT;
+            this->data_storage->reset();
+            this->data_storage->data_length = 1;
+            return COMMAND_RESPONSE_SELECT_SUCCESS;
+          }
+          case COMMAND_DRINKER_INPUT_SET_ANGLE: {  // drinker input set angle
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 2;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x3A: {  // drinker output open
-            this->command_id = 0x3A;
+          case COMMAND_DRINKER_OUTPUT_OPEN: {  // drinker output open
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 1;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x3B: {  // drinker output close
-            this->command_id = 0x3B;
+          case COMMAND_DRINKER_OUTPUT_CLOSE: {  // drinker output close
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 1;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x3C: {  // drinker output set angle
-            this->command_id = 0x3C;
+          case COMMAND_DRINKER_OUTPUT_SET_ANGLE: {  // drinker output set angle
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 2;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x3D: {  // drinker full
-            this->command_id = 0x3D;
+          case COMMAND_DRINKER_FILL: {  // drinker full
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 1;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x3E: {  // drinker empty
-            this->command_id = 0x3E;
+          case COMMAND_DRINKER_EMPTY: {  // drinker empty
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 1;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case 0x3F: {  // drinker get water_level
-            this->command_id = 0x3F;
+          case COMMAND_DRINKER_RESET: {  // drinker reset fill and empty
+            this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 1;
@@ -305,14 +365,14 @@ class SPIProcessor {
       //-----------------------------------------------------------------------
       if (this->command_status == COMMAND_STATUS_PROCESSING) {
         switch(this->command_id) {
-          case 0x10: { // get leds status
+          case COMMAND_LEDS_GET: { // get leds status
             this->data_storage->reset();
             this->data_storage->add(this->led_controller->led_state? 0x2 : 0x1);
             this->data_storage->add(this->led_controller->led_value);
             this->command_status = COMMAND_STATUS_RESPONSE;
             break;
           }
-          case 0x11: { // set leds on off
+          case COMMAND_LEDS_STATUS_SET: { // set leds on off
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->led_controller->set_led_state(false);
@@ -331,13 +391,13 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x12: { // set leds value
+          case COMMAND_LEDS_VALUE_SET: { // set leds value
             this->led_controller->set_led_value(this->data_storage->data[0]);
             this->command_status = COMMAND_STATUS_SELECT;
             return COMMAND_RESPONSE_PROCESSING_SUCCESS;
           }
-          case 0x20: { // get feeder servo angle
-            switch (this->data_storage->data[0]) {
+          case COMMAND_FEEDER_GET_SERVO_ANGLE: { // get feeder servo angle
+            switch (this->data_storage->data[0) {
               case 0x1: {
                 this->data_storage->reset();
                 this->data_storage->add(this->feeder_controllers[0]->feeder_box_controller->servo_angle);
@@ -359,7 +419,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x21: { // get feeder_box open and close angles
+          case COMMAND_FEEDER_BOX_GET_SERVO_OPEN_CLOSE_ANGLES: { // get feeder_box open and close angles
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->data_storage->reset();
@@ -382,7 +442,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x22: { // set feeder_box open and close angles
+          case COMMAND_FEEDER_BOX_SET_SERVO_OPEN_CLOSE_ANGLES: { // set feeder_box open and close angles
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->feeder_controllers[0]->feeder_box_open_angle = this->data_storage->data[1];
@@ -403,7 +463,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x23: {  // get feeder_gate open and close angles
+          case COMMAND_FEEDER_GATE_GET_SERVO_OPEN_CLOSE_ANGLES: {  // get feeder_gate open and close angles
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->data_storage->reset();
@@ -426,7 +486,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x24: { // set feeder_gate open and close angles
+          case COMMAND_FEEDER_GATE_SET_SERVO_OPEN_CLOSE_ANGLES: { // set feeder_gate open and close angles
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->feeder_controllers[0]->feeder_gate_open_angle = this->data_storage->data[1];
@@ -447,7 +507,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x25: { // feeder box open
+          case COMMAND_FEEDER_BOX_OPEN: { // feeder box open
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->feeder_controllers[0]->feeder_box_open();
@@ -466,7 +526,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x26: { // feeder box close
+          case COMMAND_FEEDER_BOX_CLOSE: { // feeder box close
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->feeder_controllers[0]->feeder_box_close();
@@ -485,7 +545,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x27: { // feeder box set angle
+          case COMMAND_FEEDER_BOX_SET_ANGLE: { // feeder box set angle
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->feeder_controllers[0]->feeder_box_set_angle(this->data_storage->data[1]);
@@ -504,7 +564,26 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x28: {// feeder gate feed for ms
+          case COMMAND_FEEDER_GATE_FEED: {// feeder gate feed for ms
+            switch (this->data_storage->data[0]) {
+              case 0x1: {
+                this->feeder_controllers[0]->feed_async();
+                this->command_status = COMMAND_STATUS_SELECT;
+                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
+              }
+              case 0x2: {
+                this->feeder_controllers[1]->feed_async();
+                this->command_status = COMMAND_STATUS_SELECT;
+                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
+              }
+              default: {
+                this->command_status = COMMAND_STATUS_SELECT;
+                return COMMAND_RESPONSE_PROCESSING_ERROR;
+              }
+            }
+            break;
+          }
+          case COMMAND_FEEDER_GATE_FEED_MS: {// feeder gate feed for ms
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 int feed_delay = (int)this->data_storage->data[1]<<8 | (int)this->data_storage->data[2];
@@ -525,7 +604,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x29: { // feeder gate set angle
+          case COMMAND_FEEDER_GATE_SET_ANGLE: { // feeder gate set angle
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->feeder_controllers[0]->feeder_gate_set_angle(this->data_storage->data[1]);
@@ -544,7 +623,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x2A: { // feeder gate open
+          case COMMAND_FEEDER_GATE_OPEN: { // feeder gate open
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->feeder_controllers[0]->feeder_gate_open();
@@ -563,7 +642,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x2B: { // feeder gate close
+          case COMMAND_FEEDER_GATE_CLOSE: { // feeder gate close
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->feeder_controllers[0]->feeder_gate_close();
@@ -582,7 +661,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x30: { // get drinker servo angle
+          case COMMAND_DRINKER_GET_PARAMS: { // get drinker servo angle
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->data_storage->reset();
@@ -607,7 +686,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x31: { // get drinker input open and close angles
+          case COMMAND_DRINKER_INPUT_GET_OPEN_CLOSE_ANGLES: { // get drinker input open and close angles
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->data_storage->reset();
@@ -630,7 +709,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x32: { // set drinker input open and close angles
+          case COMMAND_DRINKER_INPUT_SET_OPEN_CLOSE_ANGLES: { // set drinker input open and close angles
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->drinker_controllers[0]->input_open_angle = this->data_storage->data[1];
@@ -651,7 +730,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x33: { // get drinker output open and close angles
+          case COMMAND_DRINKER_OUTPUT_GET_OPEN_CLOSE_ANGLES: { // get drinker output open and close angles
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->data_storage->reset();
@@ -674,7 +753,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x34: { // set drinker output open and close angles
+          case COMMAND_DRINKER_OUTPUT_SET_OPEN_CLOSE_ANGLES: { // set drinker output open and close angles
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->drinker_controllers[0]->output_open_angle = this->data_storage->data[1];
@@ -695,7 +774,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x35: { // get drinker water level params
+          case COMMAND_DRINKER_WATER_LEVEL_GET_PARAMS: { // get drinker water level params
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->data_storage->reset();
@@ -722,7 +801,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x36: { // set drinker water level params
+          case COMMAND_DRINKER_WATER_LEVEL_SET_PARAMS: { // set drinker water level params
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->drinker_controllers[0]->water_level_measure_iterations = this->data_storage->data[1];
@@ -747,7 +826,28 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x37: { // drinker input open
+          case COMMAND_DRINKER_WATER_LEVEL_GET_CURRENT: { // get drinker water level params
+            switch (this->data_storage->data[0]) {
+              case 0x1: {
+                this->data_storage->reset();
+                this->data_storage->add(this->drinker_controllers[0]->water_level_current);
+                this->command_status = COMMAND_STATUS_RESPONSE;
+                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
+              }
+              case 0x2: {
+                this->data_storage->reset();
+                this->data_storage->add(this->drinker_controllers[1]->water_level_current);
+                this->command_status = COMMAND_STATUS_RESPONSE;
+                return COMMAND_RESPONSE_PROCESSING_SUCCESS;
+              }
+              default: {
+                this->command_status = COMMAND_STATUS_SELECT;
+                return COMMAND_RESPONSE_PROCESSING_ERROR;
+              }
+            }
+            break;
+          }
+          case COMMAND_DRINKER_INPUT_OPEN: { // drinker input open
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->drinker_controllers[0]->input_open();
@@ -766,7 +866,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x38: { // drinker input close
+          case COMMAND_DRINKER_INPUT_CLOSE: { // drinker input close
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->drinker_controllers[0]->input_close();
@@ -785,7 +885,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x39: { //  drinker input set angle
+          case COMMAND_DRINKER_INPUT_SET_ANGLE: { //  drinker input set angle
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->drinker_controllers[0]->input_set_angle(this->data_storage->data[1]);
@@ -804,7 +904,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x3A: { // drinker ouput open
+          case COMMAND_DRINKER_OUTPUT_OPEN: { // drinker ouput open
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->drinker_controllers[0]->output_open();
@@ -823,7 +923,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x3B: { // drinker output close
+          case COMMAND_DRINKER_OUTPUT_CLOSE: { // drinker output close
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->drinker_controllers[0]->output_close();
@@ -842,7 +942,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x3C: { //  drinker output set angle
+          case COMMAND_DRINKER_OUTPUT_SET_ANGLE: { //  drinker output set angle
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->drinker_controllers[0]->output_set_angle(this->data_storage->data[1]);
@@ -861,7 +961,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x3D: { // drinker fill
+          case COMMAND_DRINKER_FILL: { // drinker fill
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->drinker_controllers[0]->fill_async();
@@ -880,7 +980,7 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x3E: { // drinker empty
+          case COMMAND_DRINKER_EMPTY: { // drinker empty
             switch (this->data_storage->data[0]) {
               case 0x1: {
                 this->drinker_controllers[0]->empty_async();
@@ -899,18 +999,16 @@ class SPIProcessor {
             }
             break;
           }
-          case 0x3F: { // get drinker water level params
+          case COMMAND_DRINKER_RESET: { // drinker empty
             switch (this->data_storage->data[0]) {
               case 0x1: {
-                this->data_storage->reset();
-                this->data_storage->add(this->drinker_controllers[0]->water_level_current);
-                this->command_status = COMMAND_STATUS_RESPONSE;
+                this->drinker_controllers[0]->reset();
+                this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
               }
               case 0x2: {
-                this->data_storage->reset();
-                this->data_storage->add(this->drinker_controllers[1]->water_level_current);
-                this->command_status = COMMAND_STATUS_RESPONSE;
+                this->drinker_controllers[1]->reset();
+                this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
               }
               default: {

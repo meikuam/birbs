@@ -27,7 +27,7 @@ class FeederController: public Thread  {
           int feeder_box_close_angle=100,
           int feeder_gate_open_angle=150, 
           int feeder_gate_close_angle=100,
-          int feeder_gate_delay=100) : Thread(3, 10000, 0){
+          int feeder_gate_delay=100) : Thread(3, 500, 0){
             
             this->feeder_box_open_angle = feeder_box_open_angle;
             this->feeder_box_close_angle = feeder_box_close_angle;
@@ -58,26 +58,26 @@ class FeederController: public Thread  {
             if (abs(millis() - time_val) >= feeder_gate_delay_cache) {
                 feeder_gate_close();
                 feed_flag = false;
-              {
-                ThreadInterruptBlocker block;
-                Serial.print("feeder ended"); Serial.print(abs(millis() - time_val));
-              }
+//              {
+//                ThreadInterruptBlocker block;
+//                Serial.print("feeder ended"); Serial.print(millis());Serial.print(" "); Serial.println(abs(millis() - time_val));
+//              }
             }
             
-            {
-              ThreadInterruptBlocker block;
-              Serial.print("feeder "); Serial.print(abs(millis() - time_val));
-            }
+//            {
+//              ThreadInterruptBlocker block;
+//              Serial.print("feeder ");Serial.print(millis()); Serial.print(" ");Serial.println(abs(millis() - time_val));
+//            }
           }
         }
         void feed_async(int gate_delay = -1) {
-          feeder_gate_delay_cache = gate_delay;
+          feeder_gate_delay_cache = gate_delay > 0 ? gate_delay : this->feeder_gate_delay;
           feed_flag = true;
           time_val = millis();
-          {
-            ThreadInterruptBlocker block;
-            Serial.print("feeder started "); Serial.print(time_val);
-          }
+//          {
+//            ThreadInterruptBlocker block;
+//            Serial.print("feeder started ");Serial.print(feeder_gate_delay_cache); Serial.print(" "); Serial.println(time_val);
+//          }
           feeder_gate_open();
         }
         void feed(int gate_delay = -1) {

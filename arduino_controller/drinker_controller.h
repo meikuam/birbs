@@ -21,7 +21,7 @@ class DrinkerController: public Thread {
         uint8_t water_level_trigger_pin;
         uint8_t water_level_echo_pin;
         int water_level_current = -1;
-        int water_level_measure_iterations = 10;
+        int water_level_measure_iterations = 1;
         int water_level_max_cm_distance = 10;
         int water_level_max_level = -1;
         int water_level_min_level = -1;
@@ -36,7 +36,7 @@ class DrinkerController: public Thread {
           int input_open_angle=-1,
           int input_close_angle=-1,
           int output_open_angle=-1,
-          int output_close_angle=-1) : Thread(3, 10000, 0) {
+          int output_close_angle=-1) : Thread(3, 500, 0) {
             this->input_open_angle = input_open_angle;
             this->input_close_angle = input_close_angle;
             this->input_controller = new ServoController(
@@ -69,31 +69,39 @@ class DrinkerController: public Thread {
             pinMode(this->water_level_trigger_pin, OUTPUT); 
             pinMode(this->water_level_trigger_pin, INPUT); 
         }
+
+        void reset() {
+            this->input_close();
+            this->output_open();
+            this->fill_flag = false;
+            this->empty_flag = false;
+        }
         
         virtual void run() {
             this->water_level_measure();
-            if (empty_flag) {
-              fill_flag = false;
+            if (this->empty_flag) {
+              this->fill_flag = false;
               this->input_close();
               this->output_open();
               if (this->water_level_current >= this->water_level_min_level) {
                 this->output_close();
-                empty_flag = false;
+                this->empty_flag = false;
               }
             }
-            if (fill_flag) {
-              empty_flag = false;
+            if (this->fill_flag) {
+              this->empty_flag = false;
               this->output_close();
               this->input_open();
               
               if (this->water_level_current <= this->water_level_max_level) {
                 this->input_close();
-                fill_flag = false;
+                this->fill_flag = false;
               }
             }
         }
 
         int water_level_measure() {
+            ThreadInterruptBlocker blocker;
             this->water_level_current = NewPingConvert(
                 this->water_level_sonar->ping_median(
                     this->water_level_measure_iterations,
@@ -125,12 +133,12 @@ class DrinkerController: public Thread {
           this->output_set_angle(this->output_close_angle);
         }
         void fill_async() {
-          empty_flag = false;
-          fill_flag = true;
+          this->empty_flag = false;
+          this->fill_flag = true;
         }
         void empty_async() {
-          empty_flag = true;
-          fill_flag = false;
+          this->empty_flag = true;
+          this->fill_flag = false;
         }
         
 };

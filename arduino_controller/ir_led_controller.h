@@ -16,7 +16,7 @@ class LedController: public Thread {
             0xA,  // slow        // 4
             0x1F  // rapide      // 5
         };
-        const uint8_t IR_DELAY_AFTER_RECIEVE = 200;
+        const uint8_t IR_DELAY_AFTER_RECIEVE = 10;
         uint8_t ir_pin;
         uint8_t led_pin;
       
@@ -26,7 +26,7 @@ class LedController: public Thread {
         LedController(
           uint8_t ir_pin, 
           uint8_t led_pin, 
-          uint8_t led_step = 5) : Thread(4, 20000, 0){
+          uint8_t led_step = 5) : Thread(4, 200000, 0){
             this->ir_pin = ir_pin;
             this->led_pin = led_pin;
             this->led_step = led_step;
@@ -63,7 +63,7 @@ class LedController: public Thread {
                         }
                     }
                 }
-                delay(this->IR_DELAY_AFTER_RECIEVE);
+//                delay(this->IR_DELAY_AFTER_RECIEVE);
                 IrReceiver.resume();
             }
         }
