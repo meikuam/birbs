@@ -1,4 +1,4 @@
-mport serial
+import serial
 import pytz
 from datetime import datetime, timedelta
 import time

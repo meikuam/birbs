@@ -48,7 +48,8 @@ class ControllerApi:
             state = True
         else:
             state = None
-        return [state, data_in[2]]
+        led_value = data_in[2]
+        return [state, led_value]
 
     def leds_status_set(self, state: bool):
         """
