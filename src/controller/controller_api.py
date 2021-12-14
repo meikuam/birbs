@@ -220,7 +220,7 @@ class ControllerApi:
         data_out = [
             commands.COMMAND_DRINKER_GET_PARAMS,
             controller_id,
-            0x00, 0x00, 0x00, 0x00, 0x00]
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
         data_in = self.spi.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
@@ -230,6 +230,7 @@ class ControllerApi:
         drinker_water_level_current = data_in[5]
         drinker_empty_flag = data_in[6]
         drinker_fill_flag = data_in[7]
+
         if drinker_empty_flag == 0x01:
             drinker_empty_flag = False
         elif drinker_empty_flag == 0x02:
