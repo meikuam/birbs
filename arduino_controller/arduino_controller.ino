@@ -4,6 +4,7 @@
 #include "feeder_controller.h"
 #include "ir_led_controller.h"
 
+//TODO: add EEPROM saving of params
 
 //Configures the interrupt timer ticks in us (1000 gives 1ms).
 SET_THREAD_HANDLER_TICK(0);

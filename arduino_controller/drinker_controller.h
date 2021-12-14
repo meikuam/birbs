@@ -62,7 +62,9 @@ class DrinkerController: public Thread {
                 );
         };
         virtual ~DrinkerController() {
-          
+          delete this->input_controller;
+          delete this->output_controller;
+          delete this->water_level_sonar;
         }
 
         void setup() {
@@ -137,8 +139,8 @@ class DrinkerController: public Thread {
           this->fill_flag = true;
         }
         void empty_async() {
-          this->empty_flag = true;
           this->fill_flag = false;
+          this->empty_flag = true;
         }
         
 };

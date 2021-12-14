@@ -17,7 +17,7 @@ class FeederController: public Thread  {
         int feeder_gate_delay = 100;
         int feeder_gate_delay_cache = 100;
         bool feed_flag = false;
-        unsigned long time_val;
+        unsigned long time_val = 0;
 
 
         FeederController(
@@ -46,7 +46,8 @@ class FeederController: public Thread  {
                 MG90S_MIN_PWM);
         };
         virtual ~FeederController() {
-           
+           delete this->feeder_box_controller;
+           delete this->feeder_gate_controller;
         }
         
         void setup() {
@@ -58,27 +59,14 @@ class FeederController: public Thread  {
             if (abs(millis() - time_val) >= feeder_gate_delay_cache) {
                 feeder_gate_close();
                 feed_flag = false;
-//              {
-//                ThreadInterruptBlocker block;
-//                Serial.print("feeder ended"); Serial.print(millis());Serial.print(" "); Serial.println(abs(millis() - time_val));
-//              }
             }
-            
-//            {
-//              ThreadInterruptBlocker block;
-//              Serial.print("feeder ");Serial.print(millis()); Serial.print(" ");Serial.println(abs(millis() - time_val));
-//            }
           }
         }
         void feed_async(int gate_delay = -1) {
           feeder_gate_delay_cache = gate_delay > 0 ? gate_delay : this->feeder_gate_delay;
-          feed_flag = true;
           time_val = millis();
-//          {
-//            ThreadInterruptBlocker block;
-//            Serial.print("feeder started ");Serial.print(feeder_gate_delay_cache); Serial.print(" "); Serial.println(time_val);
-//          }
           feeder_gate_open();
+          feed_flag = true;
         }
         void feed(int gate_delay = -1) {
             feeder_gate_open();

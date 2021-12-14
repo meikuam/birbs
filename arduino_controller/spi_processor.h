@@ -64,7 +64,7 @@ enum CommandResponseStatus {
   COMMAND_RESPONSE_ARGUMENT_ERROR = 0x41,
   COMMAND_RESPONSE_PROCESSING_SUCCESS = 0xAA,
   COMMAND_RESPONSE_PROCESSING_ERROR = 0xAB,
-  COMMAND_RESPONSE_RESPONSE_ERROR = 0x54,
+  COMMAND_RESPONSE_RESPONSE_ERROR = 0x54
 };
 
 
@@ -84,7 +84,6 @@ class SPIProcessor {
     uint8_t drinker_controllers_len;
     
     uint8_t command_id;
-  
     CommandStatus command_status;
     
     SPIProcessor(
@@ -96,10 +95,13 @@ class SPIProcessor {
       int data_storage_size=128) {
 
       this->led_controller = led_controller;
+      
       this->feeder_controllers = feeder_controllers;
       this->feeder_controllers_len = feeder_controllers_len;
+      
       this->drinker_controllers = drinker_controllers;
       this->drinker_controllers_len = drinker_controllers_len;
+      
       this->command_status = COMMAND_STATUS_SELECT;
       this->command_id = 0x00;
       this->data_storage = new DataStorage(data_storage_size);
@@ -447,8 +449,8 @@ class SPIProcessor {
             return COMMAND_RESPONSE_PROCESSING_SUCCESS;
           }
           case COMMAND_FEEDER_GET_SERVO_ANGLE: { // get feeder servo angle
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->feeder_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->feeder_controllers_len) {
                 this->data_storage->reset();
                 this->data_storage->add(this->feeder_controllers[index]->feeder_box_controller->servo_angle);
                 this->data_storage->add(this->feeder_controllers[index]->feeder_gate_controller->servo_angle);
@@ -461,8 +463,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_FEEDER_BOX_GET_SERVO_OPEN_CLOSE_ANGLES: { // get feeder_box open and close angles
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->feeder_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->feeder_controllers_len) {
                 this->data_storage->reset();
                 this->data_storage->add(this->feeder_controllers[index]->feeder_box_open_angle);
                 this->data_storage->add(this->feeder_controllers[index]->feeder_box_close_angle);
@@ -475,8 +477,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_FEEDER_BOX_SET_SERVO_OPEN_CLOSE_ANGLES: { // set feeder_box open and close angles
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->feeder_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->feeder_controllers_len) {
                 this->feeder_controllers[index]->feeder_box_open_angle = this->data_storage->data[1];
                 this->feeder_controllers[index]->feeder_box_close_angle = this->data_storage->data[2];
                 this->command_status = COMMAND_STATUS_SELECT;
@@ -488,8 +490,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_FEEDER_GATE_GET_SERVO_OPEN_CLOSE_ANGLES: {  // get feeder_gate open and close angles
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->feeder_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->feeder_controllers_len) {
                 this->data_storage->reset();
                 this->data_storage->add(this->feeder_controllers[index]->feeder_gate_open_angle);
                 this->data_storage->add(this->feeder_controllers[index]->feeder_gate_close_angle);
@@ -502,8 +504,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_FEEDER_GATE_SET_SERVO_OPEN_CLOSE_ANGLES: { // set feeder_gate open and close angles
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->feeder_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->feeder_controllers_len) {
                 this->feeder_controllers[index]->feeder_gate_open_angle = this->data_storage->data[1];
                 this->feeder_controllers[index]->feeder_gate_close_angle = this->data_storage->data[2];
                 this->command_status = COMMAND_STATUS_SELECT;
@@ -515,8 +517,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_FEEDER_BOX_OPEN: { // feeder box open
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->feeder_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->feeder_controllers_len) {
                 this->feeder_controllers[index]->feeder_box_open();
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
@@ -527,8 +529,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_FEEDER_BOX_CLOSE: { // feeder box close
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->feeder_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->feeder_controllers_len) {
                 this->feeder_controllers[index]->feeder_box_close();
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
@@ -539,8 +541,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_FEEDER_BOX_SET_ANGLE: { // feeder box set angle
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->feeder_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->feeder_controllers_len) {
                 this->feeder_controllers[index]->feeder_box_set_angle(this->data_storage->data[1]);
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
@@ -551,9 +553,9 @@ class SPIProcessor {
             break;
           }
           case COMMAND_FEEDER_GATE_FEED: {// feeder gate feed for ms
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->feeder_controllers_len) {
-                this->feeder_controllers[index]->feed_async();;
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->feeder_controllers_len) {
+                this->feeder_controllers[index]->feed_async();
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
             } else {
@@ -563,8 +565,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_FEEDER_GATE_FEED_MS: {// feeder gate feed for ms
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->feeder_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->feeder_controllers_len) {
                 int feed_delay = (int)this->data_storage->data[1]<<8 | (int)this->data_storage->data[2];
                 this->feeder_controllers[index]->feed_async(feed_delay);
                 this->command_status = COMMAND_STATUS_SELECT;
@@ -576,8 +578,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_FEEDER_GATE_SET_ANGLE: { // feeder gate set angle
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->feeder_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->feeder_controllers_len) {
                 this->feeder_controllers[index]->feeder_gate_set_angle(this->data_storage->data[1]);
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
@@ -589,8 +591,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_FEEDER_GATE_OPEN: { // feeder gate open
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->feeder_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->feeder_controllers_len) {
                 this->feeder_controllers[index]->feeder_gate_open();
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
@@ -602,8 +604,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_FEEDER_GATE_CLOSE: { // feeder gate close
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->feeder_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->feeder_controllers_len) {
                 this->feeder_controllers[index]->feeder_gate_close();
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
@@ -614,12 +616,14 @@ class SPIProcessor {
             break;
           }
           case COMMAND_DRINKER_GET_PARAMS: { // get drinker servo angle
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->drinker_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->drinker_controllers_len) {
                 this->data_storage->reset();
                 this->data_storage->add(this->drinker_controllers[index]->input_controller->servo_angle);
                 this->data_storage->add(this->drinker_controllers[index]->output_controller->servo_angle);
                 this->data_storage->add(this->drinker_controllers[index]->water_level_current);
+                this->data_storage->add(this->drinker_controllers[index]->empty_flag ? 0x2 : 0x1);
+                this->data_storage->add(this->drinker_controllers[index]->fill_flag ? 0x2 : 0x1);
                 this->command_status = COMMAND_STATUS_RESPONSE;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
             } else {
@@ -629,8 +633,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_DRINKER_INPUT_GET_OPEN_CLOSE_ANGLES: { // get drinker input open and close angles
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->drinker_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->drinker_controllers_len) {
                 this->data_storage->reset();
                 this->data_storage->add(this->drinker_controllers[index]->input_open_angle);
                 this->data_storage->add(this->drinker_controllers[index]->input_close_angle);
@@ -643,8 +647,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_DRINKER_INPUT_SET_OPEN_CLOSE_ANGLES: { // set drinker input open and close angles
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->drinker_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->drinker_controllers_len) {
                 this->drinker_controllers[index]->input_open_angle = this->data_storage->data[1];
                 this->drinker_controllers[index]->input_close_angle = this->data_storage->data[2];
                 this->command_status = COMMAND_STATUS_SELECT;
@@ -656,8 +660,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_DRINKER_OUTPUT_GET_OPEN_CLOSE_ANGLES: { // get drinker output open and close angles
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->drinker_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->drinker_controllers_len) {
                 this->data_storage->reset();
                 this->data_storage->add(this->drinker_controllers[index]->output_open_angle);
                 this->data_storage->add(this->drinker_controllers[index]->output_close_angle);
@@ -670,8 +674,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_DRINKER_OUTPUT_SET_OPEN_CLOSE_ANGLES: { // set drinker output open and close angles
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->drinker_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->drinker_controllers_len) {
                 this->drinker_controllers[index]->output_open_angle = this->data_storage->data[1];
                 this->drinker_controllers[index]->output_close_angle = this->data_storage->data[2];
                 this->command_status = COMMAND_STATUS_SELECT;
@@ -683,8 +687,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_DRINKER_WATER_LEVEL_GET_PARAMS: { // get drinker water level params
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->drinker_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->drinker_controllers_len) {
                 this->data_storage->reset();
                 this->data_storage->add(this->drinker_controllers[index]->water_level_measure_iterations);
                 this->data_storage->add(this->drinker_controllers[index]->water_level_max_cm_distance);
@@ -699,8 +703,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_DRINKER_WATER_LEVEL_SET_PARAMS: { // set drinker water level params
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->drinker_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->drinker_controllers_len) {
                 this->drinker_controllers[index]->water_level_measure_iterations = this->data_storage->data[1];
                 this->drinker_controllers[index]->water_level_max_cm_distance = this->data_storage->data[2];
                 this->drinker_controllers[index]->water_level_max_level = this->data_storage->data[3];
@@ -714,8 +718,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_DRINKER_WATER_LEVEL_GET_CURRENT: { // get drinker water level params
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->drinker_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->drinker_controllers_len) {
                 this->data_storage->reset();
                 this->data_storage->add(this->drinker_controllers[index]->water_level_current);
                 this->command_status = COMMAND_STATUS_RESPONSE;
@@ -727,8 +731,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_DRINKER_INPUT_OPEN: { // drinker input open
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->drinker_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->drinker_controllers_len) {
                 this->drinker_controllers[index]->input_open();
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
@@ -739,8 +743,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_DRINKER_INPUT_CLOSE: { // drinker input close
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->drinker_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->drinker_controllers_len) {
                 this->drinker_controllers[index]->input_close();
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
@@ -751,8 +755,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_DRINKER_INPUT_SET_ANGLE: { //  drinker input set angle
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->drinker_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->drinker_controllers_len) {
                 this->drinker_controllers[index]->input_set_angle(this->data_storage->data[1]);
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
@@ -763,8 +767,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_DRINKER_OUTPUT_OPEN: { // drinker ouput open
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->drinker_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->drinker_controllers_len) {
                 this->drinker_controllers[index]->output_open();
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
@@ -775,8 +779,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_DRINKER_OUTPUT_CLOSE: { // drinker output close
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->drinker_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->drinker_controllers_len) {
                 this->drinker_controllers[index]->output_close();
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
@@ -787,8 +791,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_DRINKER_OUTPUT_SET_ANGLE: { //  drinker output set angle
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->drinker_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->drinker_controllers_len) {
                 this->drinker_controllers[index]->output_set_angle(this->data_storage->data[1]);
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
@@ -799,8 +803,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_DRINKER_FILL: { // drinker fill
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->drinker_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->drinker_controllers_len) {
                 this->drinker_controllers[index]->fill_async();
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
@@ -811,8 +815,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_DRINKER_EMPTY: { // drinker empty
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->drinker_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->drinker_controllers_len) {
                 this->drinker_controllers[index]->empty_async();
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
@@ -823,8 +827,8 @@ class SPIProcessor {
             break;
           }
           case COMMAND_DRINKER_RESET: { // drinker reset
-            uint8_t index = this->data_storage->data[0];
-            if (0 < index && index <= this->drinker_controllers_len) {
+            uint8_t index = this->data_storage->data[0] - 1;
+            if (index < this->drinker_controllers_len) {
                 this->drinker_controllers[index]->reset();
                 this->command_status = COMMAND_STATUS_SELECT;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
@@ -853,4 +857,5 @@ class SPIProcessor {
       }
       return spdr_buffer;
     }
+    
 };
