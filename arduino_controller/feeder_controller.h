@@ -35,15 +35,15 @@ class FeederController: public Thread  {
                 feeder_box_pin,
                 this->feeder_box_close_angle,
                 MG90S_MIN_PWM,
-                MG90S_MIN_PWM);
+                MG90S_MAX_PWM);
             this->feeder_gate_open_angle = feeder_gate_open_angle;
             this->feeder_gate_close_angle = feeder_gate_close_angle;
             this->feeder_gate_delay = feeder_gate_delay;
             this->feeder_gate_controller = new ServoController(
                 feeder_gate_pin,
                 this->feeder_gate_close_angle,
-                MG90S_MIN_PWM,
-                MG90S_MIN_PWM);
+                MG90S_METALL_MIN_PWM,
+                MG90S_METALL_MAX_PWM);
         };
         virtual ~FeederController() {
            delete this->feeder_box_controller;

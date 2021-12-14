@@ -45,13 +45,13 @@ void setup()
   feeder_controllers[0] = new FeederController(
     6, 5,
     10, 100, 
-    150, 100); 
+    170, 115); 
   feeder_controllers[0]->setup();
    // box_pin = 7, gate_pin = 3
   feeder_controllers[1] = new FeederController(
     7, 3, 
     10, 100, 
-    150, 100);
+    170, 115);
   feeder_controllers[1]->setup();
   
   // drinker control

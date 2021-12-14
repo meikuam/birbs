@@ -5,6 +5,8 @@ const int MG995_MIN_PWM = 400;
 const int MG995_MAX_PWM = 2400;
 const int MG90S_MIN_PWM = 400;
 const int MG90S_MAX_PWM = 2400; 
+const int MG90S_METALL_MIN_PWM = 400;
+const int MG90S_METALL_MAX_PWM = 2400; 
 
 
 // feeder controler
@@ -34,9 +36,10 @@ class ServoController {
             }
         };
 
-        void write(int angle, bool smart = false) {
+        void write(int angle, bool smart = true) {
             if (smart) {
               // TODO: make smart positioning of servo (to avoid jitter, shaking...)
+                if (angle)
                 this->servo_angle = angle;
                 this->servo.write(this->servo_angle);
             } else {
