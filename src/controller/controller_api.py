@@ -1,5 +1,6 @@
 from typing import List, Any
 import periphery
+from threading import Lock
 
 import src.controller.commands as commands
 
@@ -25,6 +26,12 @@ class ControllerApi:
             max_speed=max_speed,
             bit_order="msb",
             bits_per_word=8)
+        self.lock = Lock()
+
+    def transfer(self, data_out: List[int]) -> List[int]:
+        with self.lock:
+            data_in = self.spi.transfer(data_out)
+        return data_in
 
     def leds_get(self)-> List[Any]:
         """
@@ -33,7 +40,8 @@ class ControllerApi:
         data_out = [
             commands.COMMAND_LEDS_GET,
             0x00, 0x00]
-        data_in = self.spi.transfer(data_out)
+
+        data_in = self.transfer(data_out)
         if data_in[1] == 0x01:
             state = False
         elif data_in[1] == 0x02:
@@ -50,7 +58,7 @@ class ControllerApi:
             commands.COMMAND_LEDS_STATUS_SET,
             0x2 if state else 0x1,
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
 
@@ -59,7 +67,7 @@ class ControllerApi:
             commands.COMMAND_LEDS_VALUE_SET,
             set_byte_range(value),
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
 
@@ -68,7 +76,7 @@ class ControllerApi:
             commands.COMMAND_FEEDER_GET_SERVO_ANGLE,
             controller_id,
             0x00, 0x00, 0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
@@ -81,7 +89,7 @@ class ControllerApi:
             commands.COMMAND_FEEDER_BOX_GET_SERVO_OPEN_CLOSE_ANGLES,
             controller_id,
             0x00, 0x00, 0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
@@ -96,7 +104,7 @@ class ControllerApi:
             set_byte_range(feeder_box_open_angle),
             set_byte_range(feeder_box_close_angle),
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_ARGUMENT_SUCCESS, "RESPONSE_ARGUMENT_ERROR"
@@ -108,7 +116,7 @@ class ControllerApi:
             commands.COMMAND_FEEDER_GATE_GET_SERVO_OPEN_CLOSE_ANGLES,
             controller_id,
             0x00, 0x00, 0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
@@ -123,7 +131,7 @@ class ControllerApi:
             set_byte_range(feeder_gate_open_angle),
             set_byte_range(feeder_gate_close_angle),
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_ARGUMENT_SUCCESS, "RESPONSE_ARGUMENT_ERROR"
@@ -135,7 +143,7 @@ class ControllerApi:
             commands.COMMAND_FEEDER_BOX_OPEN,
             controller_id,
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
@@ -145,7 +153,7 @@ class ControllerApi:
             commands.COMMAND_FEEDER_BOX_CLOSE,
             controller_id,
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
@@ -156,7 +164,7 @@ class ControllerApi:
             controller_id,
             set_byte_range(angle),
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
@@ -166,7 +174,7 @@ class ControllerApi:
             commands.COMMAND_FEEDER_GATE_FEED,
             controller_id,
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
@@ -177,7 +185,7 @@ class ControllerApi:
             controller_id,
             *int2bytes(ms),
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_ARGUMENT_SUCCESS, "RESPONSE_ARGUMENT_ERROR"
@@ -190,7 +198,7 @@ class ControllerApi:
             controller_id,
             set_byte_range(angle),
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_ARGUMENT_SUCCESS, "RESPONSE_ARGUMENT_ERROR"
@@ -201,7 +209,7 @@ class ControllerApi:
             commands.COMMAND_FEEDER_GATE_OPEN,
             controller_id,
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
@@ -211,7 +219,7 @@ class ControllerApi:
             commands.COMMAND_FEEDER_GATE_CLOSE,
             controller_id,
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
@@ -221,7 +229,7 @@ class ControllerApi:
             commands.COMMAND_DRINKER_GET_PARAMS,
             controller_id,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
@@ -257,7 +265,7 @@ class ControllerApi:
             commands.COMMAND_DRINKER_INPUT_GET_OPEN_CLOSE_ANGLES,
             controller_id,
             0x00, 0x00, 0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
@@ -272,7 +280,7 @@ class ControllerApi:
             set_byte_range(drinker_input_open_angle),
             set_byte_range(drinker_input_close_angle),
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_ARGUMENT_SUCCESS, "RESPONSE_ARGUMENT_ERROR"
@@ -284,7 +292,7 @@ class ControllerApi:
             commands.COMMAND_DRINKER_OUTPUT_GET_OPEN_CLOSE_ANGLES,
             controller_id,
             0x00, 0x00, 0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
@@ -299,7 +307,7 @@ class ControllerApi:
             set_byte_range(drinker_output_open_angle),
             set_byte_range(drinker_output_close_angle),
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_ARGUMENT_SUCCESS, "RESPONSE_ARGUMENT_ERROR"
@@ -311,7 +319,7 @@ class ControllerApi:
             commands.COMMAND_DRINKER_WATER_LEVEL_GET_PARAMS,
             controller_id,
             0x00, 0x00, 0x00, 0x00, 0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
@@ -343,7 +351,7 @@ class ControllerApi:
             set_byte_range(water_level_max_level),
             set_byte_range(water_level_min_level),
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_ARGUMENT_SUCCESS, "RESPONSE_ARGUMENT_ERROR"
@@ -357,7 +365,7 @@ class ControllerApi:
             commands.COMMAND_DRINKER_WATER_LEVEL_GET_CURRENT,
             controller_id,
             0x00, 0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
@@ -369,7 +377,7 @@ class ControllerApi:
             commands.COMMAND_DRINKER_INPUT_OPEN,
             controller_id,
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
@@ -379,7 +387,7 @@ class ControllerApi:
             commands.COMMAND_DRINKER_INPUT_CLOSE,
             controller_id,
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
@@ -390,7 +398,7 @@ class ControllerApi:
             controller_id,
             set_byte_range(angle),
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_ARGUMENT_SUCCESS, "RESPONSE_ARGUMENT_ERROR"
@@ -401,7 +409,7 @@ class ControllerApi:
             commands.COMMAND_DRINKER_OUTPUT_OPEN,
             controller_id,
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
@@ -411,7 +419,7 @@ class ControllerApi:
             commands.COMMAND_DRINKER_OUTPUT_CLOSE,
             controller_id,
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
@@ -422,7 +430,7 @@ class ControllerApi:
             controller_id,
             set_byte_range(angle),
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_ARGUMENT_SUCCESS, "RESPONSE_ARGUMENT_ERROR"
@@ -433,7 +441,7 @@ class ControllerApi:
             commands.COMMAND_DRINKER_FILL,
             controller_id,
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
@@ -443,7 +451,7 @@ class ControllerApi:
             commands.COMMAND_DRINKER_EMPTY,
             controller_id,
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
@@ -453,7 +461,7 @@ class ControllerApi:
             commands.COMMAND_DRINKER_RESET,
             controller_id,
             0x00]
-        data_in = self.spi.transfer(data_out)
+        data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
