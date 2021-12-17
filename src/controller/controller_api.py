@@ -16,8 +16,16 @@ def bytes2int(value: List[int]) -> int:
 def set_byte_range(value: int) -> int:
     return max(min(value, 255), 0)
 
+# metaclass singleton pattern
+class Singleton(type):
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
 
-class ControllerApi:
+
+class ControllerApi(metaclass=Singleton):
 
     def __init__(self, devpath="/dev/spidev1.0", max_speed=10000):
         self.spi = periphery.SPI(
@@ -71,6 +79,9 @@ class ControllerApi:
         data_in = self.transfer(data_out)
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
+
+    def feeder_get_controller_ids(self) -> List[Any]:
+        return [1, 2]
 
     def feeder_get_servo_angle(self, controller_id: int) -> List[Any]:
         data_out = [
@@ -146,8 +157,8 @@ class ControllerApi:
             0x00]
         data_in = self.transfer(data_out)
 
-        assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
-        assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
+        assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, f"RESPONSE_SELECT_ERROR: {data_in[1]}"
+        assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, f"RESPONSE_PROCESSING_ERROR: {data_in[2]}"
 
     def feeder_box_close(self, controller_id: int):
         data_out = [
@@ -224,6 +235,9 @@ class ControllerApi:
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
+
+    def drinker_get_controller_ids(self) -> List[Any]:
+        return [1, 2]
 
     def drinker_get_params(self, controller_id: int) -> List[Any]:
         data_out = [

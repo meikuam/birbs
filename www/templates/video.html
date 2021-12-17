@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>video</title>
+</head>
+<body>
+
+<div id="base_div">
+    <a>video devices</a>
+    <br>
+</div>
+
+</body>
+</html>
+<script>
+    document.addEventListener('DOMContentLoaded', function (event) {
+        let base_div = document.getElementById("base_div");
+
+        function add_video_div(device_id) {
+            let video_div = document.createElement("div");
+            let name_label = document.createElement("a");
+            name_label.text = "/api/video/" + device_id;
+            video_div.appendChild(name_label);
+
+            let video = document.createElement("video");
+            video.autoplay = true;
+            video.controls = true;
+            let source = document.createElement("source");
+            source.setAttribute("src", "/api/video/" + device_id);
+            source.setAttribute("type", "video/mp4");
+            video.appendChild(source);
+            video.play();
+            video_div.appendChild(video);
+            base_div.appendChild(video_div);
+        }
+        fetch("/api/video", {
+            method: 'GET',
+            headers: {'Content-Type': 'application/json'}
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                for (i = 0; i < data['devices'].length; i++) {
+                    add_video_div(data['devices'][i]);
+                }
+            })
+            .catch(error => {
+                console.log('Error:', error);
+            });
+    });
+</script>
