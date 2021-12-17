@@ -43,7 +43,8 @@ class DrinkerController: public Thread {
                 input_pin, 
                 this->input_close_angle, 
                 MG995_MIN_PWM,
-                MG995_MAX_PWM);
+                MG995_MAX_PWM,
+                MG995_ROTATION_SPEED);
 
             this->output_open_angle = output_open_angle;
             this->output_close_angle = output_close_angle;
@@ -51,7 +52,8 @@ class DrinkerController: public Thread {
                 output_pin, 
                 this->output_open_angle, 
                 MG995_MIN_PWM, 
-                MG995_MAX_PWM);
+                MG995_MAX_PWM,
+                MG995_ROTATION_SPEED);
             
             this->water_level_trigger_pin = water_level_trigger_pin;
             this->water_level_echo_pin = water_level_echo_pin;
