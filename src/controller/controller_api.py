@@ -27,7 +27,7 @@ class Singleton(type):
 
 class ControllerApi(metaclass=Singleton):
 
-    def __init__(self, devpath="/dev/spidev1.0", max_speed=10000):
+    def __init__(self, devpath="/dev/spidev1.0", max_speed=5000):
         self.spi = periphery.SPI(
             devpath=devpath,
             mode=0,
@@ -81,6 +81,7 @@ class ControllerApi(metaclass=Singleton):
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
 
     def feeder_get_controller_ids(self) -> List[Any]:
+        # TODO: hardcoded values should be changed to commands
         return [1, 2]
 
     def feeder_get_servo_angle(self, controller_id: int) -> List[Any]:
@@ -237,6 +238,7 @@ class ControllerApi(metaclass=Singleton):
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
 
     def drinker_get_controller_ids(self) -> List[Any]:
+        # TODO: hardcoded values should be changed to commands
         return [1, 2]
 
     def drinker_get_params(self, controller_id: int) -> List[Any]:
@@ -480,3 +482,5 @@ class ControllerApi(metaclass=Singleton):
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
+
+controller_api: ControllerApi = ControllerApi()

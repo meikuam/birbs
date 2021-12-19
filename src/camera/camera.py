@@ -22,20 +22,29 @@ def image_put_text(image: np.ndarray, text: str, bottom_left_point: List[int]) -
 
 class CameraStream:
     def __init__(self, src=None, add_date=False):
-        self.cap = cv2.VideoCapture(src, cv2.CAP_V4L2)
+        self.src = src
+        self.cap = None
+        self.init_cap()
         self.add_date = add_date
         self.thread = None
         self.stream_running = False
-        self.output = np.zeros([1, 1, 3])
+        self.output = None  #np.zeros([1, 1, 3])
         self.lock = Lock()
-        self.set_resolution(320, 240)
-        self.set_resolution(256, 192)
+
+    def init_cap(self):
+        if self.cap is None:
+            self.cap = cv2.VideoCapture(self.src, cv2.CAP_V4L2)
+
+    def unselect_cap(self):
+        self.cap = None
 
     def set_resolution(self, width, height):
+        self.init_cap()
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
     def get_resolution(self) -> List[int]:
+        self.init_cap()
         current_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         current_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         return [current_width, current_height]
@@ -51,17 +60,6 @@ class CameraStream:
         max_width, max_height = self.get_resolution()
         self.set_resolution(current_width, current_height)
         return [max_width, max_height]
-
-    """
-    resolutions = {}
-
-for index, row in table[["W", "H"]].iterrows():
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, row["W"])
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, row["H"])
-    width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
-    height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    resolutions[str(width)+"x"+str(height)] = "OK"
-    """
 
     def get_frame(self):
         while True:
@@ -82,11 +80,12 @@ for index, row in table[["W", "H"]].iterrows():
                 with self.lock:
                     self.output = img
             else:
-                print("error get frame")
+                print(self.src, "error get frame: ")
                 time.sleep(1)
 
     def start(self):
         print("start thread")
+        self.init_cap()
         self.stream_running = True
         self.thread = Thread(target=self.stream_function, args=())
         self.thread.start()
@@ -97,6 +96,7 @@ for index, row in table[["W", "H"]].iterrows():
             print("stop thread")
             self.stream_running = False
             self.thread.join()
+            self.unselect_cap()
             print("thread stopped")
 
 
@@ -108,7 +108,8 @@ def get_available_camera_streams(key_index=True):
         camera_stream = CameraStream(src=device)
         if camera_stream.get_resolution()[0] > 0:
             print("add device", device, camera_stream.get_resolution())
-            if key_index:  #TODO: use index instead of path
+            camera_stream.unselect_cap()
+            if key_index:
                 device_id = int(device[len("/dev/video"):])
                 camera_streams[device_id] = camera_stream
             else:
