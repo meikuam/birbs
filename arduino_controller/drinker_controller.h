@@ -21,7 +21,7 @@ class DrinkerController: public Thread {
         uint8_t water_level_trigger_pin;
         uint8_t water_level_echo_pin;
         int water_level_current = -1;
-        int water_level_measure_iterations = 1;
+        int water_level_measure_iterations = 3;
         int water_level_max_cm_distance = 10;
         int water_level_max_level = -1;
         int water_level_min_level = -1;

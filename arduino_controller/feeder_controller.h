@@ -57,6 +57,7 @@ class FeederController: public Thread  {
         }
         
         virtual void run() {
+          // TODO: we should take into consideration that servo moves for some time (60° for 100ms for example), and if we set delay == 100 it will not have time to turn
           if (feed_flag) {
             if (abs(millis() - time_val) >= feeder_gate_delay_cache) {
                 feeder_gate_close();
@@ -77,7 +78,7 @@ class FeederController: public Thread  {
         }
 
         void feeder_gate_set_angle(int angle) {
-            this->feeder_gate_controller->write(angle);
+            this->feeder_gate_controller->write(angle, true);
         }
 
         void feeder_gate_open() {
@@ -89,7 +90,7 @@ class FeederController: public Thread  {
         }
 
         void feeder_box_set_angle(int angle) {
-            this->feeder_box_controller->write(angle, true);
+            this->feeder_box_controller->write(angle);
         }
         
         void feeder_box_open() {

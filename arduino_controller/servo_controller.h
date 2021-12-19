@@ -35,9 +35,6 @@ class ServoController: public Thread {
         unsigned long rotation_time_ms = 0;
         unsigned long rotation_start_time_ms = 0;
         
-//        int smart_rotating_angle = 5;
-//        bool smart_rotating = false;
-        
         ServoController(
           uint8_t servo_pin, 
           int default_angle=-1, 
@@ -77,9 +74,10 @@ class ServoController: public Thread {
             this->servo_enabled = false;
         }
 
-        void write(int angle, bool going_detach = false) { //, bool smart = false) {
+        void write(int angle, bool going_detach = false) {
+            ThreadInterruptBlocker blocker;
             // measure rotation angle, if previous value is unknown or it has been disabled, suppose that it should make full rotation
-            int rotation_angle = !this->servo_enabled || this->servo_angle == -1 ? 180 : abs(this->servo_angle - angle);
+            int rotation_angle = !this->servo_enabled || this->servo_angle == -1 ? 90 : abs(this->servo_angle - angle);
             // calculate rotation_time in ms for rotation_speed at 60° angle
             this->rotation_time_ms = (rotation_angle * this->rotation_speed) / 60;
             
@@ -92,18 +90,5 @@ class ServoController: public Thread {
             this->rotation_start_time_ms = millis();
             this->servo_rotating = true;
             this->servo_going_detach = going_detach;
-            
-            
-            
-            
-//            if (smart) {
-//              // TODO: make smart positioning of servo (to avoid jitter, shaking...)
-//                if (angle)
-//                this->servo_angle = angle;
-//                this->servo.write(this->servo_angle);
-//            } else {
-//                this->servo_angle = angle;
-//                this->servo.write(this->servo_angle);
-//            }
         }
 };
