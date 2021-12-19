@@ -39,6 +39,14 @@ def index( request: Request):
 async def index(request: Request):
     return templates.TemplateResponse("video.html", {"request": request})
 
+@app.get("/drinker")
+async def index(request: Request):
+    return templates.TemplateResponse("drinker.html", {"request": request})
+
+@app.get("/feeder")
+async def index(request: Request):
+    return templates.TemplateResponse("feeder.html", {"request": request})
+
 
 if __name__ == "__main__":
     uvicorn.run("app:app", host="0.0.0.0", port=5000, log_level="info")

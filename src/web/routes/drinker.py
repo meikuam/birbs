@@ -61,6 +61,26 @@ async def get_drinker_state_endpoint(controller_id: int):
         water_level_min_level=water_level_min_level
     )
 
+@drinker_router.get("/{controller_id}/params", response_model=Drinker)
+async def drinker_output_get_open_close_angles_(controller_id: int):
+    [
+        drinker_input_angle,
+        drinker_output_angle,
+        drinker_water_level_current,
+        drinker_empty_flag,
+        drinker_fill_flag
+    ] = controller_api.drinker_get_params(
+        controller_id=controller_id)
+
+    return Drinker(
+        drinker_input_angle=drinker_input_angle,
+        drinker_output_angle=drinker_output_angle,
+        drinker_water_level_current=drinker_water_level_current,
+        drinker_empty_flag=drinker_empty_flag,
+        drinker_fill_flag=drinker_fill_flag
+    )
+
+
 @drinker_router.get("/{controller_id}/output_open_close_angles", response_model=Drinker)
 async def drinker_output_get_open_close_angles_(controller_id: int):
 

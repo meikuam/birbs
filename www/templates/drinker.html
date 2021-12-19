@@ -1,0 +1,325 @@
+<html>
+    <meta charset="UTF-8">
+    <head>
+        <title>Drinker</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script type="text/javascript">
+            $(document).ready(function(){
+                let dirnker_div = document.getElementById("drinker");
+                fetch("/api/drinker", {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                        .then(function(response) {
+                            return response.json()
+                        })
+                        .then(function(data){
+                            console.log('drinker', data);
+                            data["controller_ids"].forEach(function (controller_id) {
+                                let drinker_controller = document.createElement("div");
+                                // drinker_controller.addEventListener('submit', event => {
+                                //   event.preventDefault();
+                                //   // actual logic, e.g. validate the form
+                                //   console.log('Form submission cancelled.');
+                                // });
+                                let drinker_label = document.createElement("div");
+                                drinker_label.textContent = "drinker " + controller_id;
+                                drinker_controller.appendChild(drinker_label);
+
+                                fetch("/api/drinker/" + controller_id, {
+                                    method: 'GET',
+                                    headers: {
+                                        'Accept': 'application/json',
+                                        'Content-Type': 'application/json'
+                                    }
+                                })
+                                    .then(function(response) {
+                                        return response.json()
+                                    })
+                                    .then(function(data){
+                                        console.log('got responce', data);
+                                        let drinker_input_angle = document.createElement("div");
+                                        drinker_input_angle.textContent = "input_angle: " + data["drinker_input_angle"];
+                                        drinker_input_angle.classList.add("col");
+                                        drinker_controller.appendChild(drinker_input_angle);
+
+
+                                        let input_angle_range_label = document.createElement("div");
+                                        input_angle_range_label.textContent =  data["drinker_input_angle"];
+                                        input_angle_range_label.classList.add("col");
+                                        drinker_controller.appendChild(input_angle_range_label);
+                                        let input_angle_range = document.createElement("input");
+                                        input_angle_range.type = "range";
+                                        input_angle_range.classList.add("form-range");
+                                        input_angle_range.min = data["drinker_input_open_angle"];
+                                        input_angle_range.max = data["drinker_input_close_angle"];
+                                        input_angle_range.value = data["drinker_input_angle"];
+                                        input_angle_range.addEventListener("input", function (event) {
+                                            input_angle_range_label.textContent = input_angle_range.value;
+                                            console.log("input_angle_range input");
+                                            fetch("/api/drinker/" + controller_id + "/input_set_angle?angle=" + input_angle_range.value, {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Accept': 'application/json',
+                                                    'Content-Type': 'application/json'
+                                                }
+                                            })
+                                                .then(function(response) {
+                                                    console.log("input_angle_range input");
+                                                })
+                                                .catch(function() {
+                                                    console.log('input_angle_range error');
+                                                });
+                                        });
+                                        drinker_controller.appendChild(input_angle_range);
+
+                                        let drinker_output_angle = document.createElement("div");
+                                        drinker_output_angle.textContent = "output_angle: " + data["drinker_output_angle"];
+                                        drinker_output_angle.classList.add("col");
+                                        drinker_controller.appendChild(drinker_output_angle);
+
+
+                                        let output_angle_range_label = document.createElement("div");
+                                        output_angle_range_label.textContent =  data["drinker_ourput_angle"];
+                                        output_angle_range_label.classList.add("col");
+                                        drinker_controller.appendChild(output_angle_range_label);
+                                        let output_angle_range = document.createElement("input");
+                                        output_angle_range.type = "range";
+                                        output_angle_range.classList.add("form-range");
+                                        output_angle_range.min = data["drinker_output_open_angle"];
+                                        output_angle_range.max = data["drinker_output_close_angle"];
+                                        output_angle_range.value = data["drinker_output_angle"];
+                                        output_angle_range.addEventListener("input", function (event) {
+                                            output_angle_range_label.textContent = output_angle_range.value;
+                                            console.log("output_angle_range input");
+                                            fetch("/api/drinker/" + controller_id + "/output_set_angle?angle=" + output_angle_range.value, {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Accept': 'application/json',
+                                                    'Content-Type': 'application/json'
+                                                }
+                                            })
+                                                .then(function(response) {
+                                                    console.log("output_angle_range input");
+                                                })
+                                                .catch(function() {
+                                                    console.log('output_angle_range error');
+                                                });
+                                        });
+                                        drinker_controller.appendChild(output_angle_range);
+
+                                        let drinker_water_level_current = document.createElement("div");
+                                        drinker_water_level_current.classList.add("col");
+                                        drinker_controller.appendChild(drinker_water_level_current);
+
+                                        let drinker_input_open_angle = document.createElement("div");
+                                        drinker_input_open_angle.textContent = "input_open_angle: " + data["drinker_input_open_angle"];
+                                        drinker_input_open_angle.classList.add("col");
+                                        drinker_controller.appendChild(drinker_input_open_angle);
+
+                                        let drinker_input_close_angle = document.createElement("div");
+                                        drinker_input_close_angle.textContent = "input_close_angle: " + data["drinker_input_close_angle"];
+                                        drinker_input_close_angle.classList.add("col");
+                                        drinker_controller.appendChild(drinker_input_close_angle);
+
+                                        let drinker_output_open_angle = document.createElement("div");
+                                        drinker_output_open_angle.textContent = "output_open_angle: " + data["drinker_output_open_angle"];
+                                        drinker_output_open_angle.classList.add("col");
+                                        drinker_controller.appendChild(drinker_output_open_angle);
+
+                                        let drinker_output_close_angle = document.createElement("div");
+                                        drinker_output_close_angle.textContent = "output_close_angle: " + data["drinker_output_close_angle"];
+                                        drinker_output_close_angle.classList.add("col");
+                                        drinker_controller.appendChild(drinker_output_close_angle);
+
+                                        let drinker_empty_flag = document.createElement("div");
+                                        drinker_empty_flag.textContent = "empty_flag: " + data["drinker_empty_flag"];
+                                        drinker_empty_flag.classList.add("col");
+                                        drinker_controller.appendChild(drinker_empty_flag);
+
+                                        let drinker_fill_flag = document.createElement("div");
+                                        drinker_fill_flag.textContent = "fill_flag: " + data["drinker_fill_flag"];
+                                        drinker_fill_flag.classList.add("col");
+                                        drinker_controller.appendChild(drinker_fill_flag);
+
+                                        let water_level_measure_iterations = document.createElement("div");
+                                        water_level_measure_iterations.textContent = "water_level_measure_iterations: " + data["water_level_measure_iterations"];
+                                        water_level_measure_iterations.classList.add("col");
+                                        drinker_controller.appendChild(water_level_measure_iterations);
+
+                                        let water_level_max_cm_distance = document.createElement("div");
+                                        water_level_max_cm_distance.textContent = "water_level_max_cm_distance: " + data["water_level_max_cm_distance"];
+                                        water_level_max_cm_distance.classList.add("col");
+                                        drinker_controller.appendChild(water_level_max_cm_distance);
+
+                                        let water_level_max_level = document.createElement("div");
+                                        water_level_max_level.textContent = "water_level_max_level: " + data["water_level_max_level"];
+                                        water_level_max_level.classList.add("col");
+                                        drinker_controller.appendChild(water_level_max_level);
+
+                                        let water_level_min_level = document.createElement("div");
+                                        water_level_min_level.textContent = "water_level_min_level: " + data["water_level_min_level"];
+                                        water_level_min_level.classList.add("col");
+                                        drinker_controller.appendChild(water_level_min_level);
+
+                                        let  drinker_params_timeout = setTimeout(update_params, 10);
+                                        function update_params(){
+                                            fetch("/api/drinker/" + controller_id + "/params", {
+                                                method: 'GET',
+                                                headers: {
+                                                    'Accept': 'application/json',
+                                                    'Content-Type': 'application/json'
+                                                }
+                                            })
+                                                .then(function(response) {
+                                                    return response.json()
+                                                })
+                                                .then(function(data){
+                                                    console.log(data);
+                                                    drinker_input_angle.textContent = "input_angle: " + data["drinker_input_angle"];
+                                                    input_angle_range.textContent = data["drinker_input_angle"];
+                                                    input_angle_range.value = data["drinker_input_angle"];
+
+                                                    drinker_output_angle.textContent = "output_angle: " + data["drinker_output_angle"];
+                                                    output_angle_range.textContent = data["drinker_output_angle"];
+                                                    output_angle_range.value = data["drinker_output_angle"];
+                                                    drinker_water_level_current.textContent = "water_level_current" + data['drinker_water_level_current'];
+                                                    drinker_fill_flag.textContent = "fill_flag: " + data["drinker_fill_flag"];
+                                                    drinker_controller.appendChild(drinker_empty_flag);
+                                                })
+                                                .catch(function() {
+                                                    console.log('get status error');
+                                                });
+
+                                            let  drinker_params_timeout = setTimeout(update_params, 2000);
+                                        }
+
+                                        let input_open_button = document.createElement("button");
+                                        input_open_button.classList.add("btn");
+                                        input_open_button.classList.add("btn-primary");
+                                        input_open_button.type = "button";
+                                        input_open_button.textContent = "input_open";
+                                        input_open_button.addEventListener("click", function (event) {
+                                            console.log("input_open_button pressed");
+                                            fetch("/api/drinker/" + controller_id + "/input_open", {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Accept': 'application/json',
+                                                    'Content-Type': 'application/json'
+                                                }
+                                            })
+                                                .then(function(response) {
+                                                    console.log("input_open_button pressed");
+                                                })
+                                                .catch(function() {
+                                                    console.log('input_open_button error');
+                                                });
+                                        });
+                                        drinker_controller.appendChild(input_open_button);
+
+                                        let input_close_button = document.createElement("button");
+                                        input_close_button.classList.add("btn");
+                                        input_close_button.classList.add("btn-primary");
+                                        input_close_button.setAttribute("type", "button");
+                                        input_close_button.textContent = "input_close";
+                                        input_close_button.addEventListener("click", function (event) {
+                                            console.log("input_close_button pressed");
+                                            fetch("/api/drinker/" + controller_id + "/input_close", {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Accept': 'application/json',
+                                                    'Content-Type': 'application/json'
+                                                }
+                                            })
+                                                .then(function(response) {
+                                                    console.log("input_close_button pressed");
+                                                })
+                                                .catch(function() {
+                                                    console.log('input_close_button error');
+                                                });
+                                        });
+                                        drinker_controller.appendChild(input_close_button);
+
+                                        let output_open_button = document.createElement("button");
+                                        output_open_button.classList.add("btn");
+                                        output_open_button.classList.add("btn-primary");
+                                        output_open_button.type = "button";
+                                        output_open_button.textContent = "output_open";
+                                        output_open_button.addEventListener("click", function (event) {
+                                            console.log("output_open_button pressed");
+                                            fetch("/api/drinker/" + controller_id + "/output_open", {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Accept': 'application/json',
+                                                    'Content-Type': 'application/json'
+                                                }
+                                            })
+                                                .then(function(response) {
+                                                    console.log("output_open_button resp");
+                                                })
+                                                .catch(function() {
+                                                    console.log('output_open_button error');
+                                                });
+                                        });
+                                        drinker_controller.appendChild(output_open_button);
+
+                                        let output_close_button = document.createElement("button");
+                                        output_close_button.classList.add("btn");
+                                        output_close_button.classList.add("btn-primary");
+                                        output_close_button.setAttribute("type", "button");
+                                        output_close_button.textContent = "output_close";
+                                        output_close_button.addEventListener("click", function (event) {
+                                            console.log("output_close_button pressed");
+                                            fetch("/api/drinker/" + controller_id + "/output_close", {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Accept': 'application/json',
+                                                    'Content-Type': 'application/json'
+                                                }
+                                            })
+                                                .then(function(response) {
+                                                    console.log("output_close_button resp");
+                                                })
+                                                .catch(function() {
+                                                    console.log('output_close_button error');
+                                                });
+                                        });
+                                        drinker_controller.appendChild(output_close_button);
+
+
+
+
+
+
+                                    })
+                                    .catch(function() {
+                                        console.log('get status error');
+                                    });
+
+
+                                dirnker_div.appendChild(drinker_controller);
+                            });
+                        })
+                        .catch(function() {
+                            console.log('get status error');
+                        });
+            });
+      </script>
+
+    </head>
+    <body>
+    <div class="container">
+        <div class="row" id="drinker">
+
+        </div>
+        <div class="row">
+            <a href="/">back</a>
+        </div>
+    </div>
+    </body>
+</html>
