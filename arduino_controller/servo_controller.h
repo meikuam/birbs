@@ -8,7 +8,7 @@ const int MG995_ROTATION_SPEED = 200; //60° for 200ms //1667; //1° for 1667 us
 
 const int MG90S_MIN_PWM = 400;
 const int MG90S_MAX_PWM = 2400; 
-const int MG90S_ROTATION_SPEED = 100; //60° for 100ms
+const int MG90S_ROTATION_SPEED = 50; //60° for 100ms
 
 const int MG90S_METALL_MIN_PWM = 400;
 const int MG90S_METALL_MAX_PWM = 2400; 
@@ -31,7 +31,6 @@ class ServoController: public Thread {
         int servo_angle = -1;
         bool servo_enabled = false;
         bool servo_going_detach = false;
-        bool servo_rotating = false;
         unsigned long rotation_time_ms = 0;
         unsigned long rotation_start_time_ms = 0;
         
@@ -40,7 +39,7 @@ class ServoController: public Thread {
           int default_angle=-1, 
           int min_pwm=400, 
           int max_pwm=2400,
-          int rotation_speed=100) : Thread(2, 10, 0){
+          int rotation_speed=100) : Thread(2, 100, 0){
             this->servo_pin = servo_pin;
             this->min_pwm = min_pwm;
             this->max_pwm = max_pwm;
@@ -54,13 +53,10 @@ class ServoController: public Thread {
           
         }
         virtual void run() {
-          if (this->servo_rotating) {
+          if (this->servo_going_detach) {
             if (abs(millis() - this->rotation_start_time_ms) >= this->rotation_time_ms) {
-              this->servo_rotating = false;
-              if (this->servo_going_detach) {
-                this->servo_going_detach = false;
                 this->detach();
-              }
+                this->servo_going_detach = false;
             }
           }
         }
@@ -70,25 +66,31 @@ class ServoController: public Thread {
             this->servo_enabled = true;
         }
         void detach() {
-            this->servo.detach();
             this->servo_enabled = false;
+            this->servo.detach();
         }
 
         void write(int angle, bool going_detach = false) {
             ThreadInterruptBlocker blocker;
-            // measure rotation angle, if previous value is unknown or it has been disabled, suppose that it should make full rotation
-            int rotation_angle = !this->servo_enabled || this->servo_angle == -1 ? 90 : abs(this->servo_angle - angle);
-            // calculate rotation_time in ms for rotation_speed at 60° angle
-            this->rotation_time_ms = (rotation_angle * this->rotation_speed) / 60;
-            
-            if (!this->servo_enabled) {
-                this->attach();
+            if (going_detach) {
+              // measure rotation angle, if previous value is unknown or it has been disabled, suppose that it should make full rotation
+              int rotation_angle = !this->servo_enabled || this->servo_angle == -1 ? 90 : abs(this->servo_angle - angle);
+              // calculate rotation_time in ms for rotation_speed at 60° angle
+              this->rotation_time_ms = (rotation_angle * this->rotation_speed) / 60;
+              if (!this->servo_enabled) {
+                  this->attach();
+              }
+              this->servo_angle = angle;
+              this->servo.write(this->servo_angle);
+              this->rotation_start_time_ms = millis();
+              this->servo_going_detach = true;
+            } else {
+              this->servo_going_detach = false;
+              if (!this->servo_enabled) {
+                  this->attach();
+              }
+              this->servo_angle = angle;
+              this->servo.write(this->servo_angle);
             }
-            
-            this->servo_angle = angle;
-            this->servo.write(this->servo_angle);
-            this->rotation_start_time_ms = millis();
-            this->servo_rotating = true;
-            this->servo_going_detach = going_detach;
         }
 };

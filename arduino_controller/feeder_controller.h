@@ -27,7 +27,7 @@ class FeederController: public Thread  {
           int feeder_box_close_angle=100,
           int feeder_gate_open_angle=150, 
           int feeder_gate_close_angle=100,
-          int feeder_gate_delay=100) : Thread(3, 500, 0){
+          int feeder_gate_delay=100) : Thread(3, 50, 0){
             
             this->feeder_box_open_angle = feeder_box_open_angle;
             this->feeder_box_close_angle = feeder_box_close_angle;
@@ -37,6 +37,7 @@ class FeederController: public Thread  {
                 MG90S_MIN_PWM,
                 MG90S_MAX_PWM, 
                 MG90S_ROTATION_SPEED);
+            this->feeder_box_close();
             this->feeder_gate_open_angle = feeder_gate_open_angle;
             this->feeder_gate_close_angle = feeder_gate_close_angle;
             this->feeder_gate_delay = feeder_gate_delay;
@@ -46,6 +47,7 @@ class FeederController: public Thread  {
                 MG90S_METALL_MIN_PWM,
                 MG90S_METALL_MAX_PWM,
                 MG90S_METALL_ROTATION_SPEED);
+            this->feeder_gate_close();
         };
         virtual ~FeederController() {
            delete this->feeder_box_controller;
@@ -90,7 +92,7 @@ class FeederController: public Thread  {
         }
 
         void feeder_box_set_angle(int angle) {
-            this->feeder_box_controller->write(angle);
+            this->feeder_box_controller->write(angle, true);
         }
         
         void feeder_box_open() {

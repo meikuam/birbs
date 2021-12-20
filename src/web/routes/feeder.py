@@ -10,7 +10,7 @@ feeder_router = APIRouter()
 
 
 @feeder_router.get("/")
-async def get_feeder_state_endpoint():
+async def feeder_get_state_endpoint():
     controller_ids = controller_api.feeder_get_controller_ids()
     return ControllerIds(
         controller_ids=controller_ids
@@ -18,7 +18,7 @@ async def get_feeder_state_endpoint():
 
 
 @feeder_router.get("/{controller_id}/params", response_model=Feeder)
-async def get_feeder_params_endpoint(controller_id: int):
+async def feeder_get_params_endpoint(controller_id: int):
     [feeder_box_angle,
      feeder_gate_angle] = controller_api.feeder_get_servo_angle(
         controller_id=controller_id)
@@ -38,7 +38,7 @@ async def get_feeder_params_endpoint(controller_id: int):
 
 
 @feeder_router.get("/{controller_id}/servo_angle", response_model=Feeder)
-async def get_feeder_params_endpoint(controller_id: int):
+async def feeder_get_servo_angle_endpoint(controller_id: int):
     [feeder_box_angle,
      feeder_gate_angle] = controller_api.feeder_get_servo_angle(
         controller_id=controller_id)
@@ -48,7 +48,7 @@ async def get_feeder_params_endpoint(controller_id: int):
 
 
 @feeder_router.get("/{controller_id}/gate_open_close_angles", response_model=Feeder)
-async def get_feeder_params_endpoint(controller_id: int):
+async def feeder_get_gate_open_close_angles_endpoint(controller_id: int):
     [feeder_gate_open_angle,
      feeder_gate_close_angle] = controller_api.feeder_gate_get_servo_open_close_angles(
         controller_id=controller_id)
@@ -58,7 +58,7 @@ async def get_feeder_params_endpoint(controller_id: int):
 
 
 @feeder_router.post("/{controller_id}/gate_open_close_angles")
-async def feeder_gate_set_open_close_angles_endpoint(controller_id: int, open_angle: int, close_angle: int):
+async def feeder_set_gate_open_close_angles_endpoint(controller_id: int, open_angle: int, close_angle: int):
     try:
         controller_api.feeder_gate_set_servo_open_close_angles(
             controller_id=controller_id,
@@ -70,7 +70,7 @@ async def feeder_gate_set_open_close_angles_endpoint(controller_id: int, open_an
         return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @feeder_router.get("/{controller_id}/box_open_close_angles", response_model=Feeder)
-async def get_feeder_params_endpoint(controller_id: int):
+async def feeder_get_box_open_close_angles_endpoint(controller_id: int):
     [feeder_box_open_angle,
      feeder_box_close_angle] = controller_api.feeder_box_get_servo_open_close_angles(
         controller_id=controller_id)
@@ -79,7 +79,7 @@ async def get_feeder_params_endpoint(controller_id: int):
         feeder_box_close_angle=feeder_box_close_angle)
 
 @feeder_router.post("/{controller_id}/box_open_close_angles")
-async def feeder_box_set_open_close_angles_endpoint(controller_id: int, open_angle: int, close_angle: int):
+async def feeder_set_box_open_close_angles_endpoint(controller_id: int, open_angle: int, close_angle: int):
     try:
         controller_api.feeder_box_set_servo_open_close_angles(
             controller_id=controller_id,

@@ -15,11 +15,11 @@ camera_stream: Dict[int, CameraStream] = get_available_camera_streams()
 #     item.start()
 
 
-@video_router.get("/video")
+@video_router.get("/")
 def video_devices_endpoint():
     return {"devices": list(camera_stream.keys())}
 
-@video_router.get("/video/{device_id}")
+@video_router.get("/{device_id}")
 def video_endpoint(device_id: int, response: Response):
     if device_id not in camera_stream.keys():
         response.status_code = status.HTTP_400_BAD_REQUEST

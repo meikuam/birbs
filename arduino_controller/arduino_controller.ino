@@ -44,14 +44,14 @@ void setup()
   // box_pin = 6, gate_pin = 5
   feeder_controllers[0] = new FeederController(
     6, 5,
-    10, 100, 
-    170, 115); 
+    10, 110, 
+    170, 90); 
   feeder_controllers[0]->setup();
    // box_pin = 7, gate_pin = 3
   feeder_controllers[1] = new FeederController(
     7, 3, 
-    10, 100, 
-    170, 115);
+    10, 110, 
+    170, 90);
   feeder_controllers[1]->setup();
   
   // drinker control
@@ -64,8 +64,8 @@ void setup()
   drinker_controllers[0] = new DrinkerController(
       8, 9, 
       42, 44,
-      60, 150, 
-      60, 135); 
+      65, 150, 
+      65, 130); 
   drinker_controllers[0]->setup();
   // args: 
   // input_pin = 11, output_pin = 10, 
@@ -89,13 +89,14 @@ void setup()
 
 void loop(void)
 {
+  
 //  noInterrupts();
 //  interrupts();
 
 //  led_controller->loop();
 //
-//  drinker_controllers[0]->loop();
-//  drinker_controllers[1]->loop();
+  drinker_controllers[0]->run();
+  drinker_controllers[1]->run();
 //
 //  feeder_controllers[0]->loop();
 //  feeder_controllers[1]->loop();

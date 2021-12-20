@@ -105,7 +105,7 @@ def get_available_camera_streams(key_index=True):
 
     camera_streams = {}
     for device in devices:
-        camera_stream = CameraStream(src=device)
+        camera_stream = CameraStream(src=device, add_date=True)
         if camera_stream.get_resolution()[0] > 0:
             print("add device", device, camera_stream.get_resolution())
             camera_stream.unselect_cap()

@@ -27,7 +27,7 @@ class Singleton(type):
 
 class ControllerApi(metaclass=Singleton):
 
-    def __init__(self, devpath="/dev/spidev1.0", max_speed=5000):
+    def __init__(self, devpath="/dev/spidev1.0", max_speed=3000):
         self.spi = periphery.SPI(
             devpath=devpath,
             mode=0,
@@ -180,7 +180,8 @@ class ControllerApi(metaclass=Singleton):
         data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
-        assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
+        assert data_in[2] == commands.COMMAND_RESPONSE_ARGUMENT_SUCCESS, "COMMAND_RESPONSE_ARGUMENT_ERROR"
+        assert data_in[3] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
 
     def feeder_gate_feed(self, controller_id: int):
         data_out = [
