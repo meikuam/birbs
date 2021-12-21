@@ -45,7 +45,7 @@ enum CommandSet {
   COMMAND_DRINKER_OUTPUT_SET_OPEN_CLOSE_ANGLES = 0x34,
   COMMAND_DRINKER_WATER_LEVEL_GET_PARAMS = 0x35,
   COMMAND_DRINKER_WATER_LEVEL_SET_PARAMS = 0x36,
-  COMMAND_DRINKER_WATER_LEVEL_GET_CURRENT = 0x37,
+  COMMAND_DRINKER_WATER_LEVEL_GET_MOVING_AVERAGE = 0x37,
   COMMAND_DRINKER_INPUT_OPEN = 0x38,
   COMMAND_DRINKER_INPUT_CLOSE = 0x39,
   COMMAND_DRINKER_INPUT_SET_ANGLE = 0x3A,
@@ -324,7 +324,7 @@ class SPIProcessor {
             this->data_storage->data_length = 5;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
-          case COMMAND_DRINKER_WATER_LEVEL_GET_CURRENT: {  // drinker get water_level
+          case COMMAND_DRINKER_WATER_LEVEL_GET_MOVING_AVERAGE: {  // drinker get water_level moving average
             this->command_id = spdr_buffer;
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
@@ -717,11 +717,11 @@ class SPIProcessor {
             }
             break;
           }
-          case COMMAND_DRINKER_WATER_LEVEL_GET_CURRENT: { // get drinker water level params
+          case COMMAND_DRINKER_WATER_LEVEL_GET_MOVING_AVERAGE: { // get drinker water level moving average
             uint8_t index = this->data_storage->data[0] - 1;
             if (index < this->drinker_controllers_len) {
                 this->data_storage->reset();
-                this->data_storage->add(this->drinker_controllers[index]->water_level_current);
+                this->data_storage->add(this->drinker_controllers[index]->water_level_moving_average);
                 this->command_status = COMMAND_STATUS_RESPONSE;
                 return COMMAND_RESPONSE_PROCESSING_SUCCESS;
             } else {

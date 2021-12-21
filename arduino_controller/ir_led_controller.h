@@ -26,7 +26,7 @@ class LedController: public Thread {
         LedController(
           uint8_t ir_pin, 
           uint8_t led_pin, 
-          uint8_t led_step = 5) : Thread(4, 200000, 100){
+          uint8_t led_step = 5) : Thread(4, 200000, 0){
             this->ir_pin = ir_pin;
             this->led_pin = led_pin;
             this->led_step = led_step;

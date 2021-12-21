@@ -2,6 +2,7 @@
 #include "ThreadHandler.h"
 #include "servo_controller.h"
 #define ROUNDING_ENABLED true
+#define PING_DELAY 10  // ms delay between measures
 #define US_ROUNDTRIP_MM 5.7f
 #include <NewPing.h>
 
@@ -20,7 +21,8 @@ class DrinkerController: public Thread {
         NewPing* water_level_sonar;
         uint8_t water_level_trigger_pin;
         uint8_t water_level_echo_pin;
-        volatile int water_level_current = -1;
+        int water_level_current = -1;
+        int water_level_moving_average = 0;
         int water_level_measure_iterations = 3;
         int water_level_max_cm_distance = 10;
         int water_level_max_level = -1;
@@ -36,7 +38,7 @@ class DrinkerController: public Thread {
           int input_open_angle=-1,
           int input_close_angle=-1,
           int output_open_angle=-1,
-          int output_close_angle=-1) : Thread(3, 500, 0) {
+          int output_close_angle=-1) : Thread(3, 10000, 0) {
             this->input_open_angle = input_open_angle;
             this->input_close_angle = input_close_angle;
             this->input_controller = new ServoController(
@@ -105,24 +107,43 @@ class DrinkerController: public Thread {
         }
 
         int water_level_measure() {
-            ThreadInterruptBlocker blocker;
+//            ThreadInterruptBlocker blocker;
+//            unsigned int last_measure = NO_ECHO;
+//            
+//            uint8_t tries = 10;
+//            for (int i = 0; i < this->water_level_measure_iterations; i++) {
+//              last_measure = NO_ECHO;
+//              tries = 10;
+//              while(last_measure == NO_ECHO && tries > 0) {
+//                last_measure = this->water_level_sonar->ping(this->water_level_max_cm_distance);
+//                tries--;
+//              }
+//              if (last_measure != NO_ECHO) {
+//                this->water_level_current = NewPingConvert(
+//                  last_measure,
+//                  US_ROUNDTRIP_MM
+//                  );
+//                this->water_level_moving_average = 0.9 * this->water_level_moving_average + 0.1 * this->water_level_current;
+////                delay(PING_DELAY);
+//              }
+//            }
+//            unsigned int measure_time = millis();
             this->water_level_current = NewPingConvert(
                 this->water_level_sonar->ping_median(
                     this->water_level_measure_iterations,
                     this->water_level_max_cm_distance),
                 US_ROUNDTRIP_MM);
-//            this->water_level_current = this->water_level_sonar->convert_cm(
-//                this->water_level_sonar->ping_median(
-//                    this->water_level_measure_iterations,
-//                    this->water_level_max_cm_distance));
-            return this->water_level_current;
+            this->water_level_moving_average = 0.8 * this->water_level_moving_average + 0.2 * this->water_level_current;
+//            measure_time = millis() - measure_time;
+//            Serial.print("time: "); Serial.println(measure_time);
+//            return this->water_level_current;
         }
 
         void input_set_angle(int angle) {
-            this->input_controller->write(angle);
+            this->input_controller->write(angle, true);
         }
         void output_set_angle(int angle) {
-            this->output_controller->write(angle);
+            this->output_controller->write(angle, true);
         }
         void input_open() {
           this->input_set_angle(this->input_open_angle);
@@ -137,12 +158,18 @@ class DrinkerController: public Thread {
           this->output_set_angle(this->output_close_angle);
         }
         void fill_async() {
-          this->empty_flag = false;
-          this->fill_flag = true;
+          ThreadInterruptBlocker blocker;
+          if (this->water_level_max_level != -1 && this->water_level_min_level != -1) {
+            this->empty_flag = false;
+            this->fill_flag = true;
+          }
         }
         void empty_async() {
-          this->fill_flag = false;
-          this->empty_flag = true;
+          ThreadInterruptBlocker blocker;
+          if (this->water_level_max_level != -1 && this->water_level_min_level != -1) {
+            this->fill_flag = false;
+            this->empty_flag = true;
+          }
         }
         
 };

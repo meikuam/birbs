@@ -31,9 +31,9 @@ ISR (SPI_STC_vect)   //Inerrrput routine function
 void setup()
 {
   
-  Serial.begin(115200);
-  Serial.setTimeout(100);
-  Serial.println("Start birds controller");
+//  Serial.begin(115200);
+//  Serial.setTimeout(100);
+//  Serial.println("Start birds controller");
   
   // led control
   led_controller = new LedController(2, 4); // ir_pin = 2 (490Hz), led_pin = 4 (980Hz)
@@ -95,8 +95,8 @@ void loop(void)
 
 //  led_controller->loop();
 //
-  drinker_controllers[0]->run();
-  drinker_controllers[1]->run();
+//  drinker_controllers[0]->run();
+//  drinker_controllers[1]->run();
 //
 //  feeder_controllers[0]->loop();
 //  feeder_controllers[1]->loop();

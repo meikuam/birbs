@@ -27,7 +27,7 @@ class FeederController: public Thread  {
           int feeder_box_close_angle=100,
           int feeder_gate_open_angle=150, 
           int feeder_gate_close_angle=100,
-          int feeder_gate_delay=100) : Thread(3, 50, 0){
+          int feeder_gate_delay=150) : Thread(3, 10000, 0){
             
             this->feeder_box_open_angle = feeder_box_open_angle;
             this->feeder_box_close_angle = feeder_box_close_angle;
@@ -61,16 +61,20 @@ class FeederController: public Thread  {
         virtual void run() {
           // TODO: we should take into consideration that servo moves for some time (60° for 100ms for example), and if we set delay == 100 it will not have time to turn
           if (feed_flag) {
-            if (abs(millis() - time_val) >= feeder_gate_delay_cache) {
-                feeder_gate_close();
-                feed_flag = false;
-            }
+            ThreadInterruptBlocker blocker;
+//            if (abs(millis() - time_val) >= feeder_gate_delay_cache) {
+//                feeder_gate_close();
+//                feed_flag = false;
+//            }
+            this->feed(this->feeder_gate_delay_cache);
+            feed_flag = false;
+            
           }
         }
         void feed_async(int gate_delay = -1) {
-          feeder_gate_delay_cache = gate_delay > 0 ? gate_delay : this->feeder_gate_delay;
-          time_val = millis();
-          feeder_gate_open();
+          this->feeder_gate_delay_cache = gate_delay > 0 ? gate_delay : this->feeder_gate_delay;
+//          time_val = millis();
+//          feeder_gate_open();
           feed_flag = true;
         }
         void feed(int gate_delay = -1) {
@@ -79,8 +83,8 @@ class FeederController: public Thread  {
             feeder_gate_close();
         }
 
-        void feeder_gate_set_angle(int angle) {
-            this->feeder_gate_controller->write(angle, true);
+        void feeder_gate_set_angle(int angle, bool detach_servo=false) {
+            this->feeder_gate_controller->write(angle, detach_servo);
         }
 
         void feeder_gate_open() {
@@ -88,18 +92,18 @@ class FeederController: public Thread  {
         }
         
         void feeder_gate_close() {
-            this->feeder_gate_set_angle(this->feeder_gate_close_angle);
+            this->feeder_gate_set_angle(this->feeder_gate_close_angle, true);
         }
 
-        void feeder_box_set_angle(int angle) {
-            this->feeder_box_controller->write(angle, true);
+        void feeder_box_set_angle(int angle, bool detach_servo=false) {
+            this->feeder_box_controller->write(angle, detach_servo);
         }
         
         void feeder_box_open() {
-            this->feeder_box_set_angle(this->feeder_box_open_angle);
+            this->feeder_box_set_angle(this->feeder_box_open_angle, true);
         }
         
         void feeder_box_close() {
-            this->feeder_box_set_angle(this->feeder_box_close_angle);
+            this->feeder_box_set_angle(this->feeder_box_close_angle, true);
         }
 };
