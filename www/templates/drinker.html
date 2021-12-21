@@ -409,9 +409,34 @@
                                                     console.log('get status error');
                                                 });
 
-                                            let  drinker_params_timeout = setTimeout(update_params, 500);
+                                            let  drinker_params_timeout = setTimeout(update_params, 100);
                                         }
 
+                                        // let  drinker_water_level_timeout = setTimeout(update_water_level, 10);
+                                        // function update_water_level(){
+                                        //     fetch("/api/drinker/" + controller_id + "/water_level_moving_average", {
+                                        //         method: 'GET',
+                                        //         headers: {
+                                        //             'Accept': 'application/json',
+                                        //             'Content-Type': 'application/json'
+                                        //         }
+                                        //     })
+                                        //         .then(function(response) {
+                                        //             return response.json()
+                                        //         })
+                                        //         .then(function(data){
+                                        //             drinker_water_level_current.textContent = "water_level_current: " + data['drinker_water_level_moving_average'];
+                                        //
+                                        //             drinker_water_level_graph_data[0]["x"].push(new Date().toString());
+                                        //             drinker_water_level_graph_data[0]["y"].push(data['drinker_water_level_moving_average']);
+                                        //             Plotly.newPlot("water_level" + controller_id, drinker_water_level_graph_data);
+                                        //         })
+                                        //         .catch(function() {
+                                        //             console.log('get status error');
+                                        //         });
+                                        //
+                                        //     let  drinker_water_level_timeout = setTimeout(update_water_level, 500);
+                                        // }
 
 
 

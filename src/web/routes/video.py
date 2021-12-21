@@ -1,6 +1,8 @@
 from typing import Optional, Dict, List
 from fastapi import APIRouter, Request, Response, status
 from fastapi.responses import StreamingResponse
+from fastapi import WebSocket
+import asyncio
 
 from src.camera.camera import CameraStream, get_available_camera_streams
 
@@ -9,11 +11,17 @@ video_router = APIRouter()
 
 
 camera_stream: Dict[int, CameraStream] = get_available_camera_streams()
-
+# camera_stream = {
+#     1: CameraStream(1, True)
+# }
 #
 # for key, item in camera_stream.items():
 #     item.start()
 
+@video_router.on_event("shutdown")
+async def startup_event():
+    for id, cam_stream in camera_stream.items():
+        cam_stream.stop()
 
 @video_router.get("/")
 def video_devices_endpoint():

@@ -5,9 +5,18 @@ from datetime import datetime
 import numpy as np
 from typing import List
 from threading import Thread, Lock
-
+from datetime import datetime
 
 def image_put_text(image: np.ndarray, text: str, bottom_left_point: List[int]) -> np.ndarray:
+    image = cv2.putText(
+        img=image,
+        text=text,
+        org=bottom_left_point,
+        fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+        fontScale=1,
+        color=(0, 0, 0),
+        thickness=3
+    )
     image = cv2.putText(
         img=image,
         text=text,
@@ -21,11 +30,12 @@ def image_put_text(image: np.ndarray, text: str, bottom_left_point: List[int]) -
 
 
 class CameraStream:
-    def __init__(self, src=None, add_date=False):
+    def __init__(self, src=None, add_date=False, fps_counter=False):
         self.src = src
         self.cap = None
         self.init_cap()
         self.add_date = add_date
+        self.fps_counter = fps_counter
         self.thread = None
         self.stream_running = False
         self.output = None  #np.zeros([1, 1, 3])
@@ -33,7 +43,7 @@ class CameraStream:
 
     def init_cap(self):
         if self.cap is None:
-            self.cap = cv2.VideoCapture(self.src, cv2.CAP_V4L2)
+            self.cap = cv2.VideoCapture(self.src) #, cv2.CAP_V4L2)
 
     def unselect_cap(self):
         self.cap = None
@@ -66,17 +76,23 @@ class CameraStream:
             with self.lock:
                 if self.output is None:
                     continue
-                flag, image = cv2.imencode('.jpg', self.output)
-                if not flag:
-                    continue
-                yield b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + bytearray(image) + b'\r\n'
+                image = self.output.copy()
+            flag, image = cv2.imencode('.jpg', image)
+            if not flag:
+                continue
+            image_str = b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + bytearray(image) + b'\r\n'
+            yield image_str
 
     def stream_function(self):
         while self.stream_running:
+            s = datetime.now()
             ret_val, img = self.cap.read()
-            if self.add_date:
-                img = image_put_text(img, datetime.now().strftime("%d.%m.%Y %H:%M:%S"), [50, 50])
+            e = datetime.now() - s
             if ret_val:
+                if self.add_date:
+                    img = image_put_text(img, datetime.now().strftime("%d.%m.%Y %H:%M:%S"), [50, 50])
+                if self.fps_counter:
+                    img = image_put_text(img, f"fps: {1/e.total_seconds():.2f}", [50, 100])
                 with self.lock:
                     self.output = img
             else:
@@ -84,12 +100,13 @@ class CameraStream:
                 time.sleep(1)
 
     def start(self):
-        print("start thread")
-        self.init_cap()
-        self.stream_running = True
-        self.thread = Thread(target=self.stream_function, args=())
-        self.thread.start()
-        print("thread started")
+        if not self.stream_running:
+            print("start thread")
+            self.init_cap()
+            self.stream_running = True
+            self.thread = Thread(target=self.stream_function, args=())
+            self.thread.start()
+            print("thread started")
 
     def stop(self):
         if self.thread is not None:
@@ -105,7 +122,7 @@ def get_available_camera_streams(key_index=True):
 
     camera_streams = {}
     for device in devices:
-        camera_stream = CameraStream(src=device, add_date=True)
+        camera_stream = CameraStream(src=device, add_date=True, fps_counter=True)
         if camera_stream.get_resolution()[0] > 0:
             print("add device", device, camera_stream.get_resolution())
             camera_stream.unselect_cap()

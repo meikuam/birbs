@@ -5,6 +5,7 @@ class Drinker(BaseModel):
     drinker_input_angle: Optional[int]
     drinker_output_angle: Optional[int]
     drinker_water_level_current: Optional[int]
+    drinker_water_level_moving_average: Optional[int]
     drinker_empty_flag: Optional[bool]
     drinker_fill_flag: Optional[bool]
     drinker_input_open_angle: Optional[int]

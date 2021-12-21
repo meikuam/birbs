@@ -4,12 +4,8 @@ sys.path.append('.')
 
 import uvicorn
 from fastapi import FastAPI, Request, Response, status
-from fastapi.responses import HTMLResponse, UJSONResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import StreamingResponse
 from fastapi.templating import Jinja2Templates
 
-from src.controller.controller_api import controller_api
 from src.web.routes.leds import leds_router
 from src.web.routes.feeder import feeder_router
 from src.web.routes.drinker import drinker_router
@@ -30,6 +26,8 @@ templates = Jinja2Templates(directory="www/templates")
 # @app.on_event("startup")
 # async def startup_event():
 #     controller_api = ControllerApi()
+
+
 
 @app.get("/")
 def index( request: Request):

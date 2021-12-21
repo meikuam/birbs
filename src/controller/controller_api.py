@@ -378,17 +378,17 @@ class ControllerApi(metaclass=Singleton):
         assert data_in[5] == commands.COMMAND_RESPONSE_ARGUMENT_SUCCESS, "RESPONSE_ARGUMENT_ERROR"
         assert data_in[6] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
 
-    def drinker_water_level_get_current(self, controller_id: int) -> int:
+    def drinker_water_level_get_moving_average(self, controller_id: int) -> int:
         data_out = [
-            commands.COMMAND_DRINKER_WATER_LEVEL_GET_CURRENT,
+            commands.COMMAND_DRINKER_WATER_LEVEL_GET_MOVING_AVERAGE,
             controller_id,
             0x00, 0x00]
         data_in = self.transfer(data_out)
 
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
-        drinker_water_level_current = data_in[3]
-        return drinker_water_level_current
+        drinker_water_level_moving_average = data_in[3]
+        return drinker_water_level_moving_average
 
     def drinker_input_open(self, controller_id: int):
         data_out = [

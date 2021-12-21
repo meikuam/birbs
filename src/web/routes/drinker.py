@@ -62,7 +62,7 @@ async def get_drinker_state_endpoint(controller_id: int):
     )
 
 @drinker_router.get("/{controller_id}/params", response_model=Drinker)
-async def drinker_output_get_open_close_angles_(controller_id: int):
+async def drinker_output_get_open_close_angles_endpoint(controller_id: int):
     [
         drinker_input_angle,
         drinker_output_angle,
@@ -82,7 +82,7 @@ async def drinker_output_get_open_close_angles_(controller_id: int):
 
 
 @drinker_router.get("/{controller_id}/output_open_close_angles", response_model=Drinker)
-async def drinker_output_get_open_close_angles_(controller_id: int):
+async def drinker_output_get_open_close_angles_endpoint(controller_id: int):
 
     [
         drinker_output_open_angle,
@@ -162,11 +162,11 @@ async def drinker_water_level_set_params_endpoint(controller_id: int, measure_it
         print(e)
         return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-@drinker_router.get("/{controller_id}/water_level_current")
-async def drinker_water_level_current_endpoint(controller_id: int):
+@drinker_router.get("/{controller_id}/water_level_moving_average")
+async def drinker_water_level_moving_average_endpoint(controller_id: int):
     try:
-        drinker_water_level_current = controller_api.drinker_water_level_get_current(controller_id=controller_id)
-        return Drinker(drinker_water_level_current=drinker_water_level_current, skip_defaults=True, exclude_unset=True)
+        drinker_water_level_moving_average = controller_api.drinker_water_level_get_moving_average(controller_id=controller_id)
+        return Drinker(drinker_water_level_moving_average=drinker_water_level_moving_average, skip_defaults=True, exclude_unset=True)
     except AssertionError as e:
         print(e)
         return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)

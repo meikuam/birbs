@@ -22,17 +22,19 @@
             let name_label = document.createElement("a");
             name_label.text = "/api/video/" + device_id;
             video_div.appendChild(name_label);
-
             let video = document.createElement("video");
-            video.autoplay = true;
-            video.controls = true;
-            let source = document.createElement("source");
-            source.setAttribute("src", "/api/video/" + device_id);
-            source.setAttribute("type", "video/mp4");
-            video.appendChild(source);
-            video.play();
             video_div.appendChild(video);
             base_div.appendChild(video_div);
+            //
+            // let video = document.createElement("video");
+            // video.autoplay = true;
+            // video.controls = true;
+            // let source = document.createElement("source");
+            // source.setAttribute("src", "/api/video/" + device_id);
+            // source.setAttribute("type", "video/mp4");
+            // video.appendChild(source);
+            // video.play();
+            // video_div.appendChild(video);
         }
         fetch("/api/video", {
             method: 'GET',
