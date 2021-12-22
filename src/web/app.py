@@ -10,6 +10,7 @@ from src.web.routes.leds import leds_router
 from src.web.routes.feeder import feeder_router
 from src.web.routes.drinker import drinker_router
 from src.web.routes.video import video_router
+from src.web.routes.reset import reset_router
 
 
 app = FastAPI()
@@ -18,6 +19,7 @@ app.include_router(leds_router, prefix="/api/leds", tags=["leds"])
 app.include_router(feeder_router, prefix="/api/feeder", tags=["feeder"])
 app.include_router(drinker_router, prefix="/api/drinker", tags=["drinker"])
 app.include_router(video_router, prefix="/api/video", tags=["video"])
+app.include_router(reset_router, prefix="/api/reset", tags=["reset"])
 
 # app.mount("/static", StaticFiles(directory="www/static"), name="static")
 templates = Jinja2Templates(directory="www/templates")
@@ -44,6 +46,8 @@ async def index(request: Request):
 @app.get("/feeder")
 async def index(request: Request):
     return templates.TemplateResponse("feeder.html", {"request": request})
+
+
 
 
 if __name__ == "__main__":

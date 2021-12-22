@@ -484,4 +484,15 @@ class ControllerApi(metaclass=Singleton):
         assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
         assert data_in[2] == commands.COMMAND_RESPONSE_PROCESSING_SUCCESS, "RESPONSE_PROCESSING_ERROR"
 
+    def controller_reset(self):
+        data_out = [
+            commands.COMMAND_CONTROLLER_RESET,
+            commands.COMMAND_CONTROLLER_RESET,
+            commands.COMMAND_CONTROLLER_RESET
+        ]
+        data_in = self.transfer(data_out)
+        assert data_in[1] == commands.COMMAND_RESPONSE_SELECT_SUCCESS, "RESPONSE_SELECT_ERROR"
+        assert data_in[2] == commands.COMMAND_RESPONSE_ARGUMENT_SUCCESS, "COMMAND_RESPONSE_ARGUMENT_ERROR"
+
+
 controller_api: ControllerApi = ControllerApi()
