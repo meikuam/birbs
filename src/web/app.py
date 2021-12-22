@@ -39,6 +39,10 @@ def index( request: Request):
 async def index(request: Request):
     return templates.TemplateResponse("video.html", {"request": request})
 
+@app.get("/leds")
+async def index(request: Request):
+    return templates.TemplateResponse("leds.html", {"request": request})
+
 @app.get("/drinker")
 async def index(request: Request):
     return templates.TemplateResponse("drinker.html", {"request": request})

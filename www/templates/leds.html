@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>leds</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function (event) {
+            let base_div = document.getElementById("leds");
+            base_div.classList.add("col");
+
+            let leds_state = document.createElement("input");
+            leds_state.id = "led_state";
+            leds_state.classList.add("btn-check");
+            leds_state.classList.add("col");
+            leds_state.setAttribute("type", "checkbox");
+            let leds_state_label = document.createElement("label");
+            leds_state_label.classList.add("btn");
+            leds_state_label.classList.add("btn-outline-primary");
+            leds_state_label.setAttribute("for", "led_state");
+            leds_state_label.textContent = "Вкл/Выкл";
+            leds_state.addEventListener("change", function (event) {
+                console.log("leds_state pressed");
+                fetch("/api/leds/", {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "state": leds_state.checked
+                    })
+                })
+                    .then(function(response) {
+                        console.log("leds_range input");
+                    })
+                    .catch(function() {
+                        console.log('leds_range error');
+                    });
+            });
+            base_div.appendChild(leds_state);
+            base_div.appendChild(leds_state_label);
+
+
+            let leds_range = document.createElement("input");
+            leds_range.type = "range";
+            leds_range.classList.add("form-range");
+            leds_range.min = 0;
+            leds_range.max = 255;
+            leds_range.step = 5;
+            leds_range.addEventListener("input", function (event) {
+                console.log("leds_range input");
+                fetch("/api/leds/", {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "value": leds_range.value
+                    })
+                })
+                    .then(function(response) {
+                        console.log("leds_range input");
+                    })
+                    .catch(function() {
+                        console.log('leds_range error');
+                    });
+            });
+            base_div.appendChild(leds_range);
+
+
+            var timeout = setTimeout(updateStatus, 10);
+
+            function updateStatus() {
+
+                fetch("/api/leds/", {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(function(response) {
+                        return response.json()
+                    })
+                    .then(function(data){
+                        console.log('got responce', data);
+                        leds_state.checked = data['state'];
+                        leds_range.value = data['value'];
+                    })
+                    .catch(function() {
+                        console.log('get status error');
+                    });
+
+                timeout = setTimeout(updateStatus, 2000);
+            }
+        });
+    </script>
+</head>
+<body>
+
+  <div class="container">
+    <div id="leds"></div>
+    <div class="row">
+        <a href="/">back</a>
+    </div>
+  </div>
+</body>
+</html>

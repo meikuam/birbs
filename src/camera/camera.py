@@ -80,8 +80,7 @@ class CameraStream:
             flag, image = cv2.imencode('.jpg', image)
             if not flag:
                 continue
-            image_str = b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + bytearray(image) + b'\r\n'
-            yield image_str
+            yield  b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + bytearray(image) + b'\r\n'
 
     def stream_function(self):
         while self.stream_running:
