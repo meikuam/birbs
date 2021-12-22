@@ -714,7 +714,7 @@ class SPIProcessor {
           case COMMAND_DRINKER_WATER_LEVEL_SET_PARAMS: { // set drinker water level params
             uint8_t index = this->data_storage->data[0] - 1;
             if (index < this->drinker_controllers_len) {
-                this->drinker_controllers[index]->water_level_measure_iterations = this->data_storage->data[1];
+                this->drinker_controllers[index]->set_measure_iterations(this->data_storage->data[1]);
                 this->drinker_controllers[index]->water_level_max_cm_distance = this->data_storage->data[2];
                 this->drinker_controllers[index]->water_level_max_level = this->data_storage->data[3];
                 this->drinker_controllers[index]->water_level_min_level = this->data_storage->data[4];

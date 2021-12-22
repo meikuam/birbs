@@ -68,7 +68,6 @@ class FeederController: public Thread  {
 //            }
             this->feed(this->feeder_gate_delay_cache);
             feed_flag = false;
-            
           }
         }
         void feed_async(int gate_delay = -1) {
