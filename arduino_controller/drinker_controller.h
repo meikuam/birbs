@@ -2,14 +2,10 @@
 #include "ThreadHandler.h"
 #include "servo_controller.h"
 #define ROUNDING_ENABLED true
-#define PING_INTERVAL 33 // ms between measures
+#define PING_INTERVAL 100 // ms between measures
 #define US_ROUNDTRIP_MM 5.7f
 #include <NewPing.h>
 
-NewPing* water_level_sonar;
-int water_level_data;
-void echo_check();
-bool water_sensor_measure_mutex = false; // pseudo mutex for ThreadHunter
 
 
 // drinker control
@@ -30,7 +26,6 @@ class DrinkerController: public Thread {
         int* water_level_data;
         uint8_t water_level_iteration = 0;
         unsigned long water_level_ping_timer = 0;
-        bool water_sensor_measure = false;
         
         int water_level_moving_average = 0;
         int water_level_measure_iterations = 3;
@@ -50,7 +45,7 @@ class DrinkerController: public Thread {
           int input_open_angle=-1,
           int input_close_angle=-1,
           int output_open_angle=-1,
-          int output_close_angle=-1) : Thread(3, 20000, 0) {
+          int output_close_angle=-1) : Thread(3, 1000, 0) {
             this->input_open_angle = input_open_angle;
             this->input_close_angle = input_close_angle;
             this->input_controller = new ServoController(
@@ -123,9 +118,22 @@ class DrinkerController: public Thread {
               }
             }
         }
-
+        
         int water_level_measure() {
             ThreadInterruptBlocker blocker;
+            if(millis() - this->water_level_ping_timer >= PING_INTERVAL) {
+              this->water_level_ping_timer += PING_INTERVAL;
+              if (this->water_level_iteration < this->water_level_measure_iterations) {
+               this->water_level_data[this->water_level_iteration] = NewPingConvert(
+                this->water_level_sonar->ping(this->water_level_max_cm_distance),
+                US_ROUNDTRIP_MM);
+                this->water_level_iteration++;
+              } else {
+                this->water_level_median_cycle();
+                this->water_level_iteration = 0;
+              }
+            }
+            
 //            unsigned int last_measure = NO_ECHO;
 //            
 //            uint8_t tries = 10;
@@ -161,27 +169,7 @@ class DrinkerController: public Thread {
 //          if(millis() > ) {
 //            
 //          }
-            if(!water_sensor_measure_mutex) {
-              water_sensor_measure_mutex = true;
-              this->water_sensor_measure = true;
-              water_level_sonar = this->water_level_sonar;
-            }
-            if (this->water_sensor_measure) {
-              for (int i = 0; i < this->water_level_measure_iterations; i++) {
-                if (abs(millis() -  this->water_level_ping_timer) >= PING_INTERVAL) {
-                  this->water_level_ping_timer += PING_INTERVAL * this->water_level_measure_iterations;// = millis();
-                  if (i == 0 && this->water_level_iteration == this->water_level_measure_iterations - 1) {
-                    this->water_level_median_cycle();
-                  }
-                  this->water_level_sonar->timer_stop();
-                  this->water_level_data[this->water_level_iteration] = water_level_data;
-                  this->water_level_iteration = i;
-                  this->water_level_data[this->water_level_iteration] = 0;
-                  this->water_level_sonar->ping_timer(echo_check);
-                }
-              }
-              
-            }
+
         }
         void water_level_median_cycle() {
           ThreadInterruptBlocker blocker;
@@ -198,9 +186,7 @@ class DrinkerController: public Thread {
             } else it--;            // Ping out of range, skip and don't include as part of median.
           }
           this->water_level_current = uS[it >> 1];
-          Serial.print(this->water_level_current); Serial.println("mm");
-          water_sensor_measure_mutex = false;
-          this->water_sensor_measure = false;
+          Serial.print(this->water_level_current); Serial.println(" mm");
         }
         void set_measure_iterations(uint8_t iterations = -1) {
           if (iterations != -1) {
@@ -244,10 +230,3 @@ class DrinkerController: public Thread {
         }
         
 };
-
-
-void echo_check() { // If ping received, set the sensor distance to array.
-  if (water_level_sonar->check_timer()) {
-    water_level_data = water_level_sonar->ping_result / US_ROUNDTRIP_MM;
-  }
-}

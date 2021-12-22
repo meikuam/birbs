@@ -33,7 +33,7 @@ void setup()
   
   Serial.begin(115200);
   Serial.setTimeout(100);
-  Serial.println("Start birds controller");
+//  Serial.println("Start birds controller");
   
   // led control
   led_controller = new LedController(2, 4); // ir_pin = 2 (490Hz), led_pin = 4 (980Hz)
@@ -44,13 +44,13 @@ void setup()
   // box_pin = 6, gate_pin = 5
   feeder_controllers[0] = new FeederController(
     6, 5,
-    10, 110, 
+    10, 100, 
     170, 90); 
   feeder_controllers[0]->setup();
    // box_pin = 7, gate_pin = 3
   feeder_controllers[1] = new FeederController(
     7, 3, 
-    10, 110, 
+    10, 100, 
     170, 90);
   feeder_controllers[1]->setup();
   
