@@ -9,6 +9,7 @@
 #define MOSI_PIN  51
 #define SS_PIN    53 
 
+void (* reset_func) (void) = 0;
 
 enum CommandStatus {
   COMMAND_STATUS_SELECT,
@@ -54,7 +55,8 @@ enum CommandSet {
   COMMAND_DRINKER_OUTPUT_SET_ANGLE = 0x3D,
   COMMAND_DRINKER_FILL = 0x3E,
   COMMAND_DRINKER_EMPTY = 0x3F,
-  COMMAND_DRINKER_RESET = 0x40
+  COMMAND_DRINKER_RESET = 0x40,
+  COMMAND_CONTROLLER_RESET = 0x66
 };
 
 enum CommandResponseStatus {
@@ -392,6 +394,13 @@ class SPIProcessor {
             this->command_status = COMMAND_STATUS_ARGUMENT;
             this->data_storage->reset();
             this->data_storage->data_length = 1;
+            return COMMAND_RESPONSE_SELECT_SUCCESS;
+          }
+          case COMMAND_CONTROLLER_RESET: {
+            this->command_id = spdr_buffer;
+            this->command_status = COMMAND_STATUS_ARGUMENT;
+            this->data_storage->reset();
+            this->data_storage->data_length = 2;
             return COMMAND_RESPONSE_SELECT_SUCCESS;
           }
           default: {
@@ -837,6 +846,12 @@ class SPIProcessor {
                 return COMMAND_RESPONSE_PROCESSING_ERROR;
             }
             break;
+          }
+          case COMMAND_CONTROLLER_RESET: { // controller reset
+            if (this->data_storage->data[0] == COMMAND_CONTROLLER_RESET && this->data_storage->data[1] == COMMAND_CONTROLLER_RESET) {
+              reset_func();
+              break;
+            }
           }
           default: {
             break;

@@ -78,6 +78,7 @@ class FeederController: public Thread  {
           feed_flag = true;
         }
         void feed(int gate_delay = -1) {
+            ThreadInterruptBlocker blocker;
             feeder_gate_open();
             delay(gate_delay > 0 ? gate_delay : this->feeder_gate_delay);
             feeder_gate_close();
