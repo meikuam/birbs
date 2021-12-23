@@ -9,12 +9,10 @@ from fastapi.templating import Jinja2Templates
 from src.web.routes.leds import leds_router
 from src.web.routes.feeder import feeder_router
 from src.web.routes.drinker import drinker_router
-from src.web.routes.video import video_router
 from src.web.routes.reset import reset_router
 
 
 controller_app = FastAPI()
-video_app = FastAPI()
 
 controller_app.include_router(leds_router, prefix="/api/leds", tags=["leds"])
 controller_app.include_router(feeder_router, prefix="/api/feeder", tags=["feeder"])
@@ -39,21 +37,9 @@ async def index(request: Request):
 async def index(request: Request):
     return templates.TemplateResponse("feeder.html", {"request": request})
 
-video_app.include_router(video_router, prefix="/api/video", tags=["video"])
 
 
-# app.mount("/static", StaticFiles(directory="www/static"), name="static")
 templates = Jinja2Templates(directory="www/templates")
-
-
-# @app.on_event("startup")
-# async def startup_event():
-#     controller_api = ControllerApi()
-
-
-@video_app.get("/")
-async def index(request: Request):
-    return templates.TemplateResponse("video.html", {"request": request})
 
 
 

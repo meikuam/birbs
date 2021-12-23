@@ -63,10 +63,12 @@ class ServoController: public Thread {
         }
 
         void attach() {
+            ThreadInterruptBlocker blocker;
             this->servo.attach(this->servo_pin, this->min_pwm, this->max_pwm);
             this->servo_enabled = true;
         }
         void detach() {
+            ThreadInterruptBlocker blocker;
             this->servo_enabled = false;
             this->servo.detach();
         }

@@ -12,6 +12,7 @@
             base_div.classList.add("col");
             let img_div = document.createElement("img");
             img_div.classList.add("row");
+            img_div.setAttribute("width", 640);
             base_div.appendChild(img_div);
 
             fetch("/api/video", {

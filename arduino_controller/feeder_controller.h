@@ -27,7 +27,7 @@ class FeederController: public Thread  {
           int feeder_box_close_angle=100,
           int feeder_gate_open_angle=150, 
           int feeder_gate_close_angle=100,
-          int feeder_gate_delay=150) : Thread(3, 10000, 0){
+          int feeder_gate_delay=150) : Thread(3, 1000, 0){
             
             this->feeder_box_open_angle = feeder_box_open_angle;
             this->feeder_box_close_angle = feeder_box_close_angle;
@@ -61,7 +61,6 @@ class FeederController: public Thread  {
         virtual void run() {
           // TODO: we should take into consideration that servo moves for some time (60° for 100ms for example), and if we set delay == 100 it will not have time to turn
           if (feed_flag) {
-            ThreadInterruptBlocker blocker;
 //            if (abs(millis() - time_val) >= feeder_gate_delay_cache) {
 //                feeder_gate_close();
 //                feed_flag = false;
@@ -77,7 +76,6 @@ class FeederController: public Thread  {
           feed_flag = true;
         }
         void feed(int gate_delay = -1) {
-            ThreadInterruptBlocker blocker;
             feeder_gate_open();
             delay(gate_delay > 0 ? gate_delay : this->feeder_gate_delay);
             feeder_gate_close();
@@ -88,7 +86,7 @@ class FeederController: public Thread  {
         }
 
         void feeder_gate_open() {
-            this->feeder_gate_set_angle(this->feeder_gate_open_angle);
+            this->feeder_gate_set_angle(this->feeder_gate_open_angle, true);
         }
         
         void feeder_gate_close() {

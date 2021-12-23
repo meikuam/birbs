@@ -28,7 +28,7 @@ class DrinkerController: public Thread {
         unsigned long water_level_ping_timer = 0;
         
         int water_level_moving_average = 0;
-        int water_level_measure_iterations = 3;
+        int water_level_measure_iterations = 10;
         int water_level_current = -1;
         int water_level_max_cm_distance = 10;
         int water_level_max_level = -1;
@@ -45,7 +45,7 @@ class DrinkerController: public Thread {
           int input_open_angle=-1,
           int input_close_angle=-1,
           int output_open_angle=-1,
-          int output_close_angle=-1) : Thread(3, 10000, 0) {
+          int output_close_angle=-1) : Thread(3, 1000, 0) {
             this->input_open_angle = input_open_angle;
             this->input_close_angle = input_close_angle;
             this->input_controller = new ServoController(
@@ -97,21 +97,12 @@ class DrinkerController: public Thread {
         virtual void run() {
             this->water_level_measure();
             if (this->empty_flag) {
-              ThreadInterruptBlocker blocker;
-              this->fill_flag = false;
-              this->input_close();
-              this->output_open();
               if (this->water_level_current >= this->water_level_min_level) {
                 this->output_close();
                 this->empty_flag = false;
               }
             }
             if (this->fill_flag) {
-              ThreadInterruptBlocker blocker;
-              this->empty_flag = false;
-              this->output_close();
-              this->input_open();
-              
               if (this->water_level_current <= this->water_level_max_level) {
                 this->input_close();
                 this->fill_flag = false;
@@ -120,21 +111,20 @@ class DrinkerController: public Thread {
         }
         
         int water_level_measure() {
-            ThreadInterruptBlocker blocker;
-            if(millis() - this->water_level_ping_timer >= PING_INTERVAL) {
-              this->water_level_ping_timer += PING_INTERVAL;
-              if (this->water_level_iteration < this->water_level_measure_iterations) {
-                unsigned int last = this->water_level_sonar->ping(this->water_level_max_cm_distance);
-                if (last != NO_ECHO) {
-                  this->water_level_data[this->water_level_iteration] = NewPingConvert(last, US_ROUNDTRIP_MM);
-                  this->water_level_iteration++;
-                }
-              } else {
-                this->water_level_median_cycle();
-                this->water_level_iteration = 0;
+          ThreadInterruptBlocker blocker;
+          if(millis() - this->water_level_ping_timer >= PING_INTERVAL) {
+            this->water_level_ping_timer += PING_INTERVAL;
+            if (this->water_level_iteration < this->water_level_measure_iterations) {
+              unsigned int last = this->water_level_sonar->ping(this->water_level_max_cm_distance);
+              if (last != NO_ECHO) {
+                this->water_level_data[this->water_level_iteration] = NewPingConvert(last, US_ROUNDTRIP_MM);
+                this->water_level_iteration++;
               }
+            } else {
+              this->water_level_median_cycle();
+              this->water_level_iteration = 0;
             }
-
+          }
         }
         void water_level_median_cycle() {
           ThreadInterruptBlocker blocker;
@@ -179,17 +169,19 @@ class DrinkerController: public Thread {
           this->output_set_angle(this->output_close_angle);
         }
         void fill_async() {
-          ThreadInterruptBlocker blocker;
           if (this->water_level_max_level != -1 && this->water_level_min_level != -1) {
             this->empty_flag = false;
             this->fill_flag = true;
+            this->output_close();
+            this->input_open();
           }
         }
         void empty_async() {
-          ThreadInterruptBlocker blocker;
           if (this->water_level_max_level != -1 && this->water_level_min_level != -1) {
             this->fill_flag = false;
             this->empty_flag = true;
+            this->input_close();
+            this->output_open();
           }
         }
         
