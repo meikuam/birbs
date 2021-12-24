@@ -28,11 +28,11 @@ class DrinkerController: public Thread {
         unsigned long water_level_ping_timer = 0;
         
         int water_level_moving_average = 0;
-        int water_level_measure_iterations = 10;
+        int water_level_measure_iterations = 15;
         int water_level_current = -1;
-        int water_level_max_cm_distance = 10;
-        int water_level_max_level = -1;
-        int water_level_min_level = -1;
+        int water_level_max_cm_distance = 11;
+        int water_level_max_level = 0;
+        int water_level_min_level = 0;
         
         bool empty_flag = false;
         bool fill_flag = false;
@@ -169,7 +169,7 @@ class DrinkerController: public Thread {
           this->output_set_angle(this->output_close_angle);
         }
         void fill_async() {
-          if (this->water_level_max_level != -1 && this->water_level_min_level != -1) {
+          if (this->water_level_max_level != 0 && this->water_level_min_level != 0) {
             this->empty_flag = false;
             this->fill_flag = true;
             this->output_close();
@@ -177,7 +177,7 @@ class DrinkerController: public Thread {
           }
         }
         void empty_async() {
-          if (this->water_level_max_level != -1 && this->water_level_min_level != -1) {
+          if (this->water_level_max_level != 0 && this->water_level_min_level != 0) {
             this->fill_flag = false;
             this->empty_flag = true;
             this->input_close();

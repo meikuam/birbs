@@ -62,7 +62,7 @@ async def get_drinker_state_endpoint(controller_id: int):
     )
 
 @drinker_router.get("/{controller_id}/params", response_model=Drinker)
-async def drinker_output_get_open_close_angles_endpoint(controller_id: int):
+async def drinker_params_endpoint(controller_id: int):
     [
         drinker_input_angle,
         drinker_output_angle,
@@ -135,18 +135,22 @@ async def drinker_output_set_open_close_angles_endpoint(controller_id: int, open
 
 @drinker_router.get("/{controller_id}/water_level_params", response_model=Drinker)
 async def get_drinker_water_level_get_params_endpoint(controller_id: int):
-    [
-        water_level_measure_iterations,
-        water_level_max_cm_distance,
-        water_level_max_level,
-        water_level_min_level
-    ] = controller_api.drinker_water_level_get_params(
-        controller_id=controller_id)
-    return Drinker(
-        water_level_measure_iterations=water_level_measure_iterations,
-        water_level_max_cm_distance=water_level_max_cm_distance,
-        water_level_max_level=water_level_max_level,
-        water_level_min_level=water_level_min_level)
+    try:
+        [
+            water_level_measure_iterations,
+            water_level_max_cm_distance,
+            water_level_max_level,
+            water_level_min_level
+        ] = controller_api.drinker_water_level_get_params(
+            controller_id=controller_id)
+        return Drinker(
+            water_level_measure_iterations=water_level_measure_iterations,
+            water_level_max_cm_distance=water_level_max_cm_distance,
+            water_level_max_level=water_level_max_level,
+            water_level_min_level=water_level_min_level)
+    except AssertionError as e:
+        print(e)
+        return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @drinker_router.post("/{controller_id}/water_level_params")
 async def drinker_water_level_set_params_endpoint(controller_id: int, measure_iterations: int, max_cm_distance: int, max_level: int, min_level: int):

@@ -366,8 +366,8 @@ class ControllerApi(metaclass=Singleton):
             controller_id,
             set_byte_range(water_level_measure_iterations),
             set_byte_range(water_level_max_cm_distance),
-            set_byte_range(water_level_max_level),
-            set_byte_range(water_level_min_level),
+            0xff if water_level_max_level == -1 else set_byte_range(water_level_max_level),
+            0xff if water_level_min_level == -1 else set_byte_range(water_level_min_level),
             0x00]
         data_in = self.transfer(data_out)
 
