@@ -1,6 +1,8 @@
 fastapi
+fastapi_users
 uvicorn
 jinja2
 aiofiles
 python-periphery
 opencv-python
+psycopg2
