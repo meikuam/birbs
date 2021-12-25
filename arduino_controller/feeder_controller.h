@@ -27,7 +27,7 @@ class FeederController: public Thread  {
           int feeder_box_close_angle=100,
           int feeder_gate_open_angle=150, 
           int feeder_gate_close_angle=100,
-          int feeder_gate_delay=150) : Thread(3, 1000, 0){
+          int feeder_gate_delay=150) : Thread(2, 10100, 0){
             
             this->feeder_box_open_angle = feeder_box_open_angle;
             this->feeder_box_close_angle = feeder_box_close_angle;
@@ -50,8 +50,7 @@ class FeederController: public Thread  {
             this->feeder_gate_close();
         };
         virtual ~FeederController() {
-           delete this->feeder_box_controller;
-           delete this->feeder_gate_controller;
+          
         }
         
         void setup() {

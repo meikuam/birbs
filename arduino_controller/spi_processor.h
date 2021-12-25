@@ -106,7 +106,7 @@ class SPIProcessor {
       
       this->command_status = COMMAND_STATUS_SELECT;
       this->command_id = 0x00;
-      this->data_storage = new DataStorage(data_storage_size);
+      this->data_storage = new DataStorage();
     };
     
     void slave_init() {
@@ -699,7 +699,7 @@ class SPIProcessor {
             uint8_t index = this->data_storage->data[0] - 1;
             if (index < this->drinker_controllers_len) {
                 this->data_storage->reset();
-                this->data_storage->add(this->drinker_controllers[index]->water_level_measure_iterations);
+                this->data_storage->add(water_level_measure_iterations);
                 this->data_storage->add(this->drinker_controllers[index]->water_level_max_cm_distance);
                 this->data_storage->add(this->drinker_controllers[index]->water_level_max_level);
                 this->data_storage->add(this->drinker_controllers[index]->water_level_min_level);

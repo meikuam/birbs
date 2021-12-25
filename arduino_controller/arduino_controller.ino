@@ -13,7 +13,7 @@ SET_THREAD_HANDLER_TICK(0);
 THREAD_HANDLER(InterruptTimer::getInstance());
 
 // led control
-LedController* led_controller;
+LedController led_controller(4); // led_pin = 4 (980Hz)
 
 // feeder control
 FeederController** feeder_controllers;
@@ -36,8 +36,7 @@ void setup()
 //  Serial.println("Start birds controller");
   
   // led control
-  led_controller = new LedController(2, 4); // ir_pin = 2 (490Hz), led_pin = 4 (980Hz)
-  led_controller->setup();
+  led_controller.setup();
 
   // feeder control
   feeder_controllers = new FeederController*[2]; 
@@ -45,12 +44,12 @@ void setup()
   feeder_controllers[0] = new FeederController(
     6, 5,
     10, 105, 
-    170, 105); 
+    170, 95);
   feeder_controllers[0]->setup();
    // box_pin = 7, gate_pin = 3
   feeder_controllers[1] = new FeederController(
     7, 3, 
-    10, 95, 
+    10, 100,
     170, 105);
   feeder_controllers[1]->setup();
   
@@ -65,7 +64,8 @@ void setup()
       8, 9, 
       42, 44,
       65, 150, 
-      65, 130); 
+      65, 130,
+      40, 51); 
   drinker_controllers[0]->setup();
   // args: 
   // input_pin = 11, output_pin = 10, 
@@ -76,11 +76,12 @@ void setup()
     11, 10, 
     43, 45,
     60, 150, 
-    60, 135);
+    60, 135,
+    42, 54);
   drinker_controllers[1]->setup();
     
   // spi init
-  spi_processor = new SPIProcessor(led_controller, feeder_controllers, 2, drinker_controllers, 2);
+  spi_processor = new SPIProcessor(&led_controller, feeder_controllers, 2, drinker_controllers, 2);
   spi_processor->slave_init();
   
   //start executing threads

@@ -6,7 +6,7 @@
 #define US_ROUNDTRIP_MM 5.7f
 #include <NewPing.h>
 
-
+#define water_level_measure_iterations 15
 
 // drinker control
 class DrinkerController: public Thread {
@@ -23,16 +23,17 @@ class DrinkerController: public Thread {
         NewPing* water_level_sonar;
         uint8_t water_level_trigger_pin;
         uint8_t water_level_echo_pin;
-        int* water_level_data;
+        unsigned int water_level_data[water_level_measure_iterations];
+        unsigned int uS[water_level_measure_iterations];
         uint8_t water_level_iteration = 0;
         unsigned long water_level_ping_timer = 0;
         
         int water_level_moving_average = 0;
-        int water_level_measure_iterations = 15;
-        int water_level_current = -1;
-        int water_level_max_cm_distance = 11;
-        int water_level_max_level = 0;
-        int water_level_min_level = 0;
+        
+        unsigned int water_level_current = -1;
+        unsigned int water_level_max_cm_distance = 10;
+        unsigned int water_level_max_level = 0;
+        unsigned int water_level_min_level = 0;
         
         bool empty_flag = false;
         bool fill_flag = false;
@@ -45,7 +46,9 @@ class DrinkerController: public Thread {
           int input_open_angle=-1,
           int input_close_angle=-1,
           int output_open_angle=-1,
-          int output_close_angle=-1) : Thread(3, 1000, 0) {
+          int output_close_angle=-1,
+          int water_level_max_level=0,
+          int water_level_min_level=0) : Thread(2, 10200, 0) {
             this->input_open_angle = input_open_angle;
             this->input_close_angle = input_close_angle;
             this->input_controller = new ServoController(
@@ -65,8 +68,8 @@ class DrinkerController: public Thread {
                 MG995_MAX_PWM,
                 MG995_ROTATION_SPEED);
             this->output_close();
-            
-            this->water_level_data = new int[this->water_level_measure_iterations];
+            this->water_level_max_level = water_level_max_level;
+            this->water_level_min_level = water_level_min_level;
             this->water_level_ping_timer = millis();
             this->water_level_trigger_pin = water_level_trigger_pin;
             this->water_level_echo_pin = water_level_echo_pin;
@@ -77,9 +80,7 @@ class DrinkerController: public Thread {
                 );
         };
         virtual ~DrinkerController() {
-          delete this->input_controller;
-          delete this->output_controller;
-          delete this->water_level_sonar;
+            
         }
 
         void setup() {
@@ -111,25 +112,25 @@ class DrinkerController: public Thread {
         }
         
         int water_level_measure() {
-          ThreadInterruptBlocker blocker;
+         
           if(millis() - this->water_level_ping_timer >= PING_INTERVAL) {
             this->water_level_ping_timer += PING_INTERVAL;
-            if (this->water_level_iteration < this->water_level_measure_iterations) {
+            if (this->water_level_iteration < water_level_measure_iterations) {
+              ThreadInterruptBlocker blocker;
               unsigned int last = this->water_level_sonar->ping(this->water_level_max_cm_distance);
               if (last != NO_ECHO) {
                 this->water_level_data[this->water_level_iteration] = NewPingConvert(last, US_ROUNDTRIP_MM);
                 this->water_level_iteration++;
               }
             } else {
+              ThreadInterruptBlocker blocker;
               this->water_level_median_cycle();
               this->water_level_iteration = 0;
             }
           }
         }
         void water_level_median_cycle() {
-          ThreadInterruptBlocker blocker;
-          unsigned int uS[this->water_level_measure_iterations];
-          uint8_t j, it = this->water_level_measure_iterations;
+          uint8_t j, it = water_level_measure_iterations;
           uS[0] = NO_ECHO;
           for (uint8_t i = 0; i < it; i++) { // Loop through iteration results.
             if (this->water_level_data[i] != NO_ECHO) { // Ping in range, include as part of median.
@@ -143,11 +144,6 @@ class DrinkerController: public Thread {
           this->water_level_current = uS[it >> 1];
         }
         void set_measure_iterations(uint8_t iterations = -1) {
-          if (iterations != -1) {
-            this->water_level_measure_iterations = iterations;
-          }
-          delete this->water_level_data;
-          this->water_level_data = new int[this->water_level_measure_iterations];
           this->water_level_iteration = 0;
         }
         void input_set_angle(int angle) {

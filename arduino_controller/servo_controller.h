@@ -39,7 +39,7 @@ class ServoController: public Thread {
           int default_angle=-1, 
           int min_pwm=400, 
           int max_pwm=2400,
-          int rotation_speed=100) : Thread(2, 1000, 0){
+          int rotation_speed=100) : Thread(1, 1000, 0){
             this->servo_pin = servo_pin;
             this->min_pwm = min_pwm;
             this->max_pwm = max_pwm;
