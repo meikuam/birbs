@@ -5,7 +5,7 @@ from fastapi_users.password import get_password_hash
 from src.database.base import (
     engine,
     database,
-    Session
+    get_session
 )
 from src.web.models.users import (
     UserDB,
@@ -15,14 +15,20 @@ from src.web.models.users import (
     Base
 )
 
-Base.metadata.create_all(engine)
+# async with engine.begin() as conn:
+#     await conn.run_sync(Base.metadata.create_all)
+
+async def init_models():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
 users = UserTable.__table__
 user_db = SQLAlchemyUserDatabase(UserDB, database, users)
 
 
 async def create_first_admin() -> bool:
     try:
-        session = Session()
+        session = get_session()
         count = session.query(UserTable).filter_by(is_superuser=True).count()
         if count == 0:
             user = UserCreate(
@@ -38,8 +44,8 @@ async def create_first_admin() -> bool:
             if created_user:
                 created_user.is_superuser = True
                 updated_user = await user_db.update(created_user)
-        session.commit()
-        session.close()
+        await session.commit()
+        await session.close()
         return True
     except Exception as e:
         return False

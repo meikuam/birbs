@@ -1,6 +1,5 @@
 import os
 import requests
-from src.utils import base_url
 from fastapi_users.authentication import JWTAuthentication
 from fastapi_users import FastAPIUsers
 from fastapi import Request, Depends, Response
@@ -28,7 +27,7 @@ def on_after_forgot_password(user: UserDB, token: str, request: Request):
 jwt_authentication = JWTAuthentication(
     secret=SECRET,
     lifetime_seconds=3600,
-    tokenUrl=requests.utils.urlparse(base_url()).path + "/auth/jwt/login"
+    tokenUrl="/auth/jwt/login"
 )
 
 fastapi_users = FastAPIUsers(

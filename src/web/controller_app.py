@@ -1,7 +1,7 @@
 import os
 import sys
 sys.path.append('.')
-
+import asyncio
 import uvicorn
 from fastapi import FastAPI, Request, Response, status
 from fastapi.templating import Jinja2Templates
@@ -17,7 +17,7 @@ from src.web.routes.users import (
     users_router
 )
 from src.database.base import database
-from src.database.users import create_first_admin
+from src.database.users import create_first_admin, init_models
 
 controller_app = FastAPI()
 
@@ -25,6 +25,7 @@ controller_app = FastAPI()
 @controller_app.on_event("startup")
 async def startup():
     await database.connect()
+    await asyncio.run(init_models())
     success = await create_first_admin()
 
 

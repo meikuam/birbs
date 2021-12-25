@@ -1,8 +1,13 @@
 fastapi
 fastapi_users
+fastapi_users_db_sqlalchemy
 uvicorn
 jinja2
 aiofiles
 python-periphery
 opencv-python
 psycopg2
+sqlalchemy
+requests
+databases[postgresql]
+asyncio
