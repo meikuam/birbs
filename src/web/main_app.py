@@ -45,6 +45,10 @@ async def index(request: Request):
 async def index(request: Request):
     return templates.TemplateResponse("video.html", {"request": request})
 
+@main_app.get("/simple")
+async def index(request: Request):
+    return templates.TemplateResponse("simple.html", {"request": request})
+
 
 templates = Jinja2Templates(directory="www/templates")
 

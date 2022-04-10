@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Simple birbs</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script>
+                document.addEventListener('DOMContentLoaded', function (event) {
+            let leds_base_div = document.getElementById("leds");
+
+            let leds_controller = document.createElement("div");
+            leds_controller.classList.add("border");
+            leds_controller.classList.add("row");
+
+            let leds_state_label = document.createElement("label");
+            leds_state_label.classList.add("btn");
+            leds_state_label.classList.add("col");
+            leds_state_label.classList.add("btn-outline-primary");
+            leds_state_label.setAttribute("for", "led_state");
+            leds_state_label.textContent = "Освещение Вкл/Выкл";
+            leds_state_label.classList.add("m-3");
+
+            let leds_state = document.createElement("input");
+            leds_state.id = "led_state";
+            leds_state.setAttribute("type", "checkbox");
+            leds_state.addEventListener("click", function (event) {
+                console.log("leds_state pressed");
+                fetch("/api/leds/", {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "state": leds_state.checked
+                    })
+                })
+                    .then(function(response) {
+                        console.log("leds_state input");
+                        updateLed();
+                    })
+                    .catch(function() {
+                        console.log('leds_state error');
+                    });
+            });
+            leds_state_label.appendChild(leds_state);
+            leds_controller.appendChild(leds_state_label);
+
+
+            let leds_range = document.createElement("input");
+            leds_range.type = "range";
+            leds_range.classList.add("form-range");
+            leds_range.classList.add("col");
+            leds_range.classList.add("m-3");
+            leds_range.min = 0;
+            leds_range.max = 255;
+            leds_range.step = 5;
+            leds_range.addEventListener("input", function (event) {
+                console.log("leds_range input");
+                fetch("/api/leds/", {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "value": leds_range.value
+                    })
+                })
+                    .then(function(response) {
+                        console.log("leds_range input");
+                    })
+                    .catch(function() {
+                        console.log('leds_range error');
+                    });
+            });
+            leds_controller.appendChild(leds_range);
+            leds_base_div.appendChild(leds_controller);
+
+            function updateLed() {
+                fetch("/api/leds/", {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(function(response) {
+                        return response.json()
+                    })
+                    .then(function(data){
+                        console.log('got responce', data);
+                        leds_state.checked = data['state'];
+                        if (data['state'] == true) {
+                            leds_state_label.classList.add("active");
+                        } else {
+                            leds_state_label.classList.remove("active");
+                        }
+                        leds_range.value = data['value'];
+                    })
+                    .catch(function() {
+                        console.log('get status error');
+                    });
+            }
+
+            var timeout = setTimeout(updateStatus, 10);
+            function updateStatus() {
+
+                updateLed();
+                timeout = setTimeout(updateStatus, 2000);
+            }
+
+
+
+            let dirnker_div = document.getElementById("drinker");
+            fetch("/api/drinker/", {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(function(response) {
+                        return response.json()
+                    })
+                    .then(function(data){
+                        console.log('drinker', data);
+                        data["controller_ids"].forEach(function (controller_id) {
+                            let drinker_controller = document.createElement("div");
+                            drinker_controller.classList.add("row");
+                            drinker_controller.classList.add("border");
+                            let drinker_label = document.createElement("div");
+                            drinker_label.textContent = "Поилка " + controller_id;
+                            drinker_controller.appendChild(drinker_label);
+
+                            fetch("/api/drinker/" + controller_id, {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'Content-Type': 'application/json'
+                                }
+                            })
+                                .then(function(response) {
+                                    return response.json()
+                                })
+                                .then(function(data){
+                                    console.log('got responce', data);
+                                    let drinker_input_output_div = document.createElement("div");
+                                    drinker_input_output_div.classList.add("row");
+
+
+                                    let drinker_input_angle = document.createElement("div");
+                                    // drinker_input_angle.textContent = "input_angle: " + data["drinker_input_angle"];
+                                    drinker_input_angle.classList.add("col");
+                                    drinker_input_output_div.appendChild(drinker_input_angle);
+
+
+
+                                    let drinker_output_angle = document.createElement("div");
+                                    // drinker_output_angle.textContent = "output_angle: " + data["drinker_output_angle"];
+                                    drinker_output_angle.classList.add("col");
+                                    drinker_input_output_div.appendChild(drinker_output_angle);
+
+
+
+
+                                    let drinker_water_level_current = document.createElement("div");
+                                    drinker_water_level_current.classList.add("col");
+                                    drinker_input_output_div.appendChild(drinker_water_level_current);
+                                    drinker_controller.appendChild(drinker_input_output_div);
+
+
+                                    let drinker_water_level_range = document.createElement("input");
+                                    drinker_water_level_range.type = "range";
+                                    drinker_water_level_range.classList.add("form-range");
+                                    drinker_water_level_range.classList.add("row");
+                                    drinker_water_level_range.classList.add("py-md-5");
+                                    drinker_water_level_range.min = data["water_level_max_level"];
+                                    drinker_water_level_range.max = data["water_level_min_level"];
+                                    drinker_water_level_range.step = 1;
+                                    drinker_water_level_range.disabled = 1;
+                                    // drinker_water_level_range.orient = "vertical";
+                                    // drinker_water_level_range.style="-webkit-appearance: slider-vertical;";
+                                    drinker_controller.appendChild(drinker_water_level_range);
+
+                                    let drinker_empty_div = document.createElement("div");
+                                    drinker_empty_div.classList.add("row");
+                                    drinker_controller.appendChild(drinker_empty_div);
+
+
+                                    let empty_button = document.createElement("button");
+                                    empty_button.classList.add("btn");
+                                    empty_button.classList.add("btn-primary");
+                                    empty_button.classList.add("col");
+                                    empty_button.classList.add("m-3");
+                                    empty_button.setAttribute("type", "button");
+                                    empty_button.textContent = "Опустошить";
+                                    empty_button.addEventListener("click", function (event) {
+                                        console.log("fill_button pressed");
+                                        fetch("/api/drinker/" + controller_id + "/empty", {
+                                            method: 'POST',
+                                            headers: {
+                                                'Accept': 'application/json',
+                                                'Content-Type': 'application/json'
+                                            }
+                                        })
+                                            .then(function(response) {
+                                                console.log("empty_button resp");
+                                            })
+                                            .catch(function() {
+                                                console.log('empty_button error');
+                                            });
+                                    });
+                                    drinker_empty_div.appendChild(empty_button);
+
+                                    let drinker_empty_flag = document.createElement("div");
+                                    // drinker_empty_flag.textContent = "empty_flag: " + data["drinker_empty_flag"];
+                                    drinker_empty_flag.classList.add("col");
+                                    drinker_empty_div.appendChild(drinker_empty_flag);
+
+                                    let drinker_fill_div = document.createElement("div");
+                                    drinker_controller.appendChild(drinker_fill_div);
+
+                                    let fill_button = document.createElement("button");
+                                    fill_button.classList.add("btn");
+                                    fill_button.classList.add("btn-primary");
+                                    fill_button.classList.add("col");
+                                    fill_button.classList.add("m-3");
+                                    fill_button.setAttribute("type", "button");
+                                    fill_button.textContent = "Наполнить";
+                                    fill_button.addEventListener("click", function (event) {
+                                        console.log("fill_button pressed");
+                                        fetch("/api/drinker/" + controller_id + "/fill", {
+                                            method: 'POST',
+                                            headers: {
+                                                'Accept': 'application/json',
+                                                'Content-Type': 'application/json'
+                                            }
+                                        })
+                                            .then(function(response) {
+                                                console.log("fill_button resp");
+                                            })
+                                            .catch(function() {
+                                                console.log('fill_button error');
+                                            });
+                                    });
+                                    drinker_fill_div.appendChild(fill_button);
+                                    drinker_fill_div.classList.add("row");
+
+                                    let drinker_fill_flag = document.createElement("div");
+                                    // drinker_fill_flag.textContent = "fill_flag: " + data["drinker_fill_flag"];
+                                    drinker_fill_flag.classList.add("col");
+                                    drinker_fill_div.appendChild(drinker_fill_flag);
+
+
+                                    let  drinker_params_timeout = setTimeout(update_params, 10);
+                                    function update_params(){
+                                        fetch("/api/drinker/" + controller_id + "/params", {
+                                            method: 'GET',
+                                            headers: {
+                                                'Accept': 'application/json',
+                                                'Content-Type': 'application/json'
+                                            }
+                                        })
+                                            .then(function(response) {
+                                                return response.json()
+                                            })
+                                            .then(function(data){
+                                                console.log(data);
+                                                drinker_water_level_range.value = data['drinker_water_level_current'];
+                                                drinker_input_angle.textContent = "Угол входного крана: " + data["drinker_input_angle"];
+
+                                                drinker_output_angle.textContent = "Угол выходного крана: " + data["drinker_output_angle"];
+                                                drinker_water_level_current.textContent = "Уровень воды: " + data['drinker_water_level_current'];
+                                                if (data["drinker_fill_flag"] == true) {
+                                                    drinker_fill_flag.textContent = "Наполняется";
+                                                } else {
+
+                                                    drinker_fill_flag.textContent = "";
+                                                }
+                                                if (data["drinker_empty_flag"] == true) {
+                                                    drinker_empty_flag.textContent = "Опустошается";
+                                                } else {
+                                                    drinker_empty_flag.textContent = "";
+                                                }
+                                            })
+                                            .catch(function() {
+                                                console.log('get status error');
+                                            });
+
+                                        let  drinker_params_timeout = setTimeout(update_params, 300);
+                                    }
+
+                                })
+                                .catch(function(args) {
+                                    console.log('get status error', args);
+                                });
+
+
+                            dirnker_div.appendChild(drinker_controller);
+                        });
+                    })
+                    .catch(function() {
+                        console.log('get status error');
+                    });
+
+            let feeder_div = document.getElementById("feeder");
+            fetch("/api/feeder/", {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(function(response) {
+                        return response.json()
+                    })
+                    .then(function(data) {
+                        console.log('feeder', data);
+                        data["controller_ids"].forEach(function (controller_id) {
+                            let feeder_controller = document.createElement("div");
+                            feeder_controller.classList.add("row");
+                            let feeder_label = document.createElement("div");
+                            feeder_label.textContent = "Кормушка " + controller_id;
+                            feeder_controller.appendChild(feeder_label);
+
+                            fetch("/api/feeder/" + controller_id + "/params", {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'Content-Type': 'application/json'
+                                }
+                            })
+                                .then(function(response) {
+                                    return response.json()
+                                })
+                                .then(function(data){
+                                    // feeder box
+
+                                    let feeder_box_angle = document.createElement("div");
+                                    // feeder_box_angle.textContent = "Угол днища кормушки: " + data["feeder_box_angle"];
+                                    feeder_box_angle.classList.add("col");
+                                    feeder_controller.appendChild(feeder_box_angle);
+
+
+                                    // feeder gate
+                                    let feeder_gate_angle = document.createElement("div");
+                                    // feeder_gate_angle.textContent = "Угол крышки подачи корма: " + data["feeder_gate_angle"];
+                                    feeder_gate_angle.classList.add("col");
+                                    feeder_controller.appendChild(feeder_gate_angle);
+
+
+
+                                    let box_open_button = document.createElement("button");
+                                    box_open_button.classList.add("btn");
+                                    box_open_button.classList.add("m-3");
+                                    box_open_button.classList.add("col");
+                                    box_open_button.classList.add("btn-primary");
+                                    box_open_button.setAttribute("type", "button");
+                                    box_open_button.textContent = "Открыть днище";
+                                    box_open_button.addEventListener("click", function (event) {
+                                        console.log("box_open_button pressed");
+                                        fetch("/api/feeder/" + controller_id + "/box_open", {
+                                            method: 'POST',
+                                            headers: {
+                                                'Accept': 'application/json',
+                                                'Content-Type': 'application/json'
+                                            }
+                                        })
+                                            .then(function(response) {
+                                                console.log("box_open_button resp");
+                                            })
+                                            .catch(function() {
+                                                console.log('box_open_button error');
+                                            });
+                                    });
+                                    feeder_controller.appendChild(box_open_button);
+
+                                    let box_close_button = document.createElement("button");
+                                    box_close_button.classList.add("btn");
+                                    box_close_button.classList.add("m-3");
+                                    box_close_button.classList.add("col");
+                                    box_close_button.classList.add("btn-primary");
+                                    box_close_button.setAttribute("type", "button");
+                                    box_close_button.textContent = "Закрыть днище";
+                                    box_close_button.addEventListener("click", function (event) {
+                                        console.log("box_close_button pressed");
+                                        fetch("/api/feeder/" + controller_id + "/box_close", {
+                                            method: 'POST',
+                                            headers: {
+                                                'Accept': 'application/json',
+                                                'Content-Type': 'application/json'
+                                            }
+                                        })
+                                            .then(function(response) {
+                                                console.log("box_close_button resp");
+                                            })
+                                            .catch(function() {
+                                                console.log('box_close_button error');
+                                            });
+                                    });
+                                    feeder_controller.appendChild(box_close_button);
+
+
+                                    let feed_button = document.createElement("button");
+                                    feed_button.classList.add("btn");
+                                    feed_button.classList.add("m-3");
+                                    feed_button.classList.add("col");
+                                    feed_button.classList.add("btn-primary");
+                                    feed_button.setAttribute("type", "button");
+                                    feed_button.textContent = "Кормить птичек";
+                                    feed_button.addEventListener("click", function (event) {
+                                        console.log("feed_button pressed");
+                                        fetch("/api/feeder/" + controller_id + "/gate_feed", {
+                                            method: 'POST',
+                                            headers: {
+                                                'Accept': 'application/json',
+                                                'Content-Type': 'application/json'
+                                            }
+                                        })
+                                            .then(function(response) {
+                                                console.log("feed_button resp");
+                                            })
+                                            .catch(function() {
+                                                console.log('feed_button error');
+                                            });
+                                    });
+                                    feeder_controller.appendChild(feed_button);
+
+
+                                    let  feeder_params_timeout = setTimeout(update_params, 10);
+                                    function update_params(){
+                                        fetch("/api/feeder/" + controller_id + "/params", {
+                                            method: 'GET',
+                                            headers: {
+                                                'Accept': 'application/json',
+                                                'Content-Type': 'application/json'
+                                            }
+                                        })
+                                            .then(function(response) {
+                                                return response.json()
+                                            })
+                                            .then(function(data){
+                                                console.log(data);
+                                                feeder_box_angle.textContent = "Угол днища кормушки: " + data["feeder_box_angle"];
+
+                                                feeder_gate_angle.textContent = "Угол крышки подачи корма: " + data["feeder_gate_angle"];
+                                            })
+                                            .catch(function() {
+                                                console.log('get status error');
+                                            });
+
+                                        let  feeder_params_timeout = setTimeout(update_params, 300);
+                                    }
+
+                                })
+                                .catch(function() {
+                                    console.log('get status error');
+                                });
+
+
+                            feeder_div.appendChild(feeder_controller);
+                        });
+                    })
+                    .catch(function() {
+                        console.log('get status error');
+                    });
+
+
+        });
+    </script>
+</head>
+<body>
+<!--    тут должна быть простая штука:
+        включить/выключить свет
+        наполнить/опустошить поилку
+        открыть/закрыть кормушку
+        покормить в кормушку
+-->
+
+  <div class="container">
+      <div class="row"  id="leds"></div>
+      <div class="row" id="drinker"></div>
+      <div class="row" id="feeder">
+      <div class="row py-md-5">
+          <a href="/">back</a>
+      </div>
+  </div>
+</body>
+</html>
