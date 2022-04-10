@@ -8,47 +8,51 @@
         <script type="text/javascript">
             $(document).ready(function() {
                 let base_div = document.getElementById("base");
-                let reset_button = document.createElement("button");
-                reset_button.classList.add("btn");
-                reset_button.classList.add("btn-primary");
-                reset_button.setAttribute("type", "button");
-                reset_button.textContent = "reset controller";
-                reset_button.addEventListener("click", function (event) {
-                    console.log("reset_button pressed");
-                    fetch("/api/reset/serial", {
-                        method: 'POST',
-                        headers: {
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json'
-                        }
-                    })
-                        .then(function(response) {
-                            console.log("reset_button resp");
-                        })
-                        .catch(function() {
-                            console.log('reset_button error');
-                        });
-                });
-                base_div.appendChild(reset_button);
+                // let reset_button = document.createElement("button");
+                // reset_button.classList.add("btn");
+                // reset_button.classList.add("btn-primary");
+                // reset_button.setAttribute("type", "button");
+                // reset_button.textContent = "reset controller";
+                // reset_button.addEventListener("click", function (event) {
+                //     console.log("reset_button pressed");
+                //     fetch("/api/reset/serial", {
+                //         method: 'POST',
+                //         headers: {
+                //             'Accept': 'application/json',
+                //             'Content-Type': 'application/json'
+                //         }
+                //     })
+                //         .then(function(response) {
+                //             console.log("reset_button resp");
+                //         })
+                //         .catch(function() {
+                //             console.log('reset_button error');
+                //         });
+                // });
+                // base_div.appendChild(reset_button);
             });
       </script>
     </head>
     <body>
     <div class="container" id="base">
 
-        <div class="row" id="leds">
+        <div class="row h2" id="leds">
             <a href="leds">leds</a>
         </div>
 
-        <div class="row" id="feeder">
+        <div class="row h2" id="feeder">
             <a href="feeder">feeder</a>
         </div>
 
-        <div class="row" id="drinker">
+        <div class="row h2" id="drinker">
             <a href="drinker">drinker</a>
         </div>
 
-        <div class="row" id="docs">
+        <div class="row h2" id="video">
+            <a href="video">video</a>
+        </div>
+
+        <div class="row h2" id="docs">
             <a href="docs">docs</a>
         </div>
     </div>

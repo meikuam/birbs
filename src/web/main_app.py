@@ -10,33 +10,40 @@ from src.web.routes.leds import leds_router
 from src.web.routes.feeder import feeder_router
 from src.web.routes.drinker import drinker_router
 from src.web.routes.reset import reset_router
+from src.web.routes.video import video_router
 
 
-controller_app = FastAPI()
+main_app = FastAPI()
 
-controller_app.include_router(leds_router, prefix="/api/leds", tags=["leds"])
-controller_app.include_router(feeder_router, prefix="/api/feeder", tags=["feeder"])
-controller_app.include_router(drinker_router, prefix="/api/drinker", tags=["drinker"])
-controller_app.include_router(reset_router, prefix="/api/reset", tags=["reset"])
+main_app.include_router(leds_router, prefix="/api/leds", tags=["leds"])
+main_app.include_router(feeder_router, prefix="/api/feeder", tags=["feeder"])
+main_app.include_router(drinker_router, prefix="/api/drinker", tags=["drinker"])
+main_app.include_router(reset_router, prefix="/api/reset", tags=["reset"])
+
+main_app.include_router(video_router, prefix="/api/video", tags=["video"])
 
 
-@controller_app.get("/")
+@main_app.get("/")
 def index( request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 
-@controller_app.get("/leds")
+@main_app.get("/leds")
 async def index(request: Request):
     return templates.TemplateResponse("leds.html", {"request": request})
 
-@controller_app.get("/drinker")
+@main_app.get("/drinker")
 async def index(request: Request):
     return templates.TemplateResponse("drinker.html", {"request": request})
 
-@controller_app.get("/feeder")
+@main_app.get("/feeder")
 async def index(request: Request):
     return templates.TemplateResponse("feeder.html", {"request": request})
 
+
+@main_app.get("/video")
+async def index(request: Request):
+    return templates.TemplateResponse("video.html", {"request": request})
 
 
 templates = Jinja2Templates(directory="www/templates")
