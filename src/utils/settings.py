@@ -17,6 +17,8 @@ telegram = {
 }
 
 fastapi = {
-    "secret": os.environ.get('API_SECRET', "SECRET"),
+    "admin_email": os.environ.get("API_ADMIN_EMAIL", "admin@admin.com"),
+    "admin_password": os.environ.get("API_ADMIN_PASSWORD", "adminpassword1"),
+    "secret": os.environ.get("API_SECRET", "SECRET"),
     "token_lifetime": 60*60*24*30  # 30 days lifetime
 }

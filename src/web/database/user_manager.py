@@ -1,3 +1,4 @@
+import contextlib
 import uuid
 from typing import Optional, Union, Dict, Any
 
@@ -81,6 +82,9 @@ async def get_user_manager(user_db=Depends(get_user_db)):
     yield UserManager(user_db)
 
 
+get_user_manager_context = contextlib.asynccontextmanager(get_user_manager)
+
+
 def get_jwt_strategy() -> JWTStrategy:
     lifetime_seconds = settings.fastapi["token_lifetime"]
     return JWTStrategy(
@@ -104,4 +108,7 @@ fastapi_users = FastAPIUsers[User, uuid.UUID](
     [auth_backend],
 )
 
+current_user = fastapi_users.current_user()
 current_active_user = fastapi_users.current_user(active=True)
+current_active_verified_user = fastapi_users.current_user(active=True, verified=True)
+current_superuser = fastapi_users.current_user(active=True, superuser=True)
