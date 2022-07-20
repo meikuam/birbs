@@ -1,54 +1,19 @@
 import os
 import requests
-from fastapi_users.authentication import JWTAuthentication
-from fastapi_users import FastAPIUsers
+import uuid
+from typing import Optional
 from fastapi import Request, Depends, Response
+from fastapi_users import FastAPIUsers, BaseUserManager, UUIDIDMixin
 
-SECRET = os.getenv('API_SECRET', "SECRET")
-
-from src.database.users import user_db
-
-from src.web.models.users import (
-    User,
-    UserDB,
-    UserCreate,
-    UserUpdate
-)
+from src.utils import settings
 
 
-def on_after_register(user: UserDB, request: Request):
-    print(f"User {user.id} has registered.")
+from src.web.models.users import UserCreate, UserRead, UserUpdate
+from src.web.database.user_manager import auth_backend, current_active_user, fastapi_users
 
 
-def on_after_forgot_password(user: UserDB, token: str, request: Request):
-    print(f"User {user.id} has forgot their password. Reset token: {token}")
-
-
-jwt_authentication = JWTAuthentication(
-    secret=SECRET,
-    lifetime_seconds=3600,
-    tokenUrl="/auth/jwt/login"
-)
-
-fastapi_users = FastAPIUsers(
-    user_db,
-    [jwt_authentication],
-    User,
-    UserCreate,
-    UserUpdate,
-    UserDB,
-)
-
-jwt_auth_router = fastapi_users.get_auth_router(jwt_authentication)
-
-@jwt_auth_router.post("/refresh")
-async def refresh_jwt(response: Response, user=Depends(fastapi_users.get_current_active_user)):
-    return await jwt_authentication.get_login_response(user, response)
-
-register_router = fastapi_users.get_register_router(on_after_register)
-
-reset_password_router = fastapi_users.get_reset_password_router(
-        SECRET, after_forgot_password=on_after_forgot_password
-)
-
-users_router = fastapi_users.get_users_router()
+auth_router = fastapi_users.get_auth_router(auth_backend)
+register_router = fastapi_users.get_register_router(UserRead, UserCreate)
+reset_password_router = fastapi_users.get_reset_password_router()
+verify_router = fastapi_users.get_verify_router(UserRead)
+users_router = fastapi_users.get_users_router(UserRead, UserUpdate)

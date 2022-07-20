@@ -1,26 +1,15 @@
-from fastapi_users import models
-from fastapi_users.db import SQLAlchemyBaseUserTable
-from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
+import uuid
+
+from fastapi_users import schemas
 
 
-class User(models.BaseUser):
-    pass
+class UserRead(schemas.BaseUser[uuid.UUID]):
+    first_name: str
 
 
-class UserCreate(models.BaseUserCreate):
-    pass
+class UserCreate(schemas.BaseUserCreate):
+    first_name: str
 
 
-class UserUpdate(User, models.BaseUserUpdate):
-    pass
-
-
-class UserDB(User, models.BaseUserDB):
-    pass
-
-
-
-Base: DeclarativeMeta = declarative_base()
-
-class UserTable(Base, SQLAlchemyBaseUserTable):
-    pass
+class UserUpdate(schemas.BaseUserUpdate):
+    first_name: str
