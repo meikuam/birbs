@@ -40,3 +40,18 @@ sudo chmod +x /usr/local/bin/docker-compose
 # почта
 
 https://stackoverflow.com/questions/68881500/how-to-send-an-email-using-python
+
+
+# background tasks
+
+https://fastapi.tiangolo.com/tutorial/background-tasks/
+https://testdriven.io/tips/079fd0c1-3a6c-4dd9-a3fe-807e0c6b0935/
+https://stackoverflow.com/questions/67599119/fastapi-asynchronous-background-tasks-blocks-other-requests
+
+
+# fastapi users
+https://fastapi-users.github.io/fastapi-users/
+
+# datepicker
+https://getdatepicker.com/6/functions.html
+
