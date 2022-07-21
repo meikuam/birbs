@@ -86,16 +86,17 @@ get_user_manager_context = contextlib.asynccontextmanager(get_user_manager)
 
 
 def get_jwt_strategy() -> JWTStrategy:
-    lifetime_seconds = settings.fastapi["token_lifetime"]
     return JWTStrategy(
         secret=settings.fastapi["secret"],
-        lifetime_seconds=lifetime_seconds,
+        lifetime_seconds=settings.fastapi["token_lifetime"],
         token_audience=["fastapi-users:auth"])
 
 
 cookie_transport = CookieTransport(
     cookie_name="fastapiuserauth",
-    cookie_max_age=None)
+    cookie_max_age=settings.fastapi["token_lifetime"],
+    cookie_secure=False
+)
 
 auth_backend = AuthenticationBackend(
     name="jwt",
@@ -108,7 +109,7 @@ fastapi_users = FastAPIUsers[User, uuid.UUID](
     [auth_backend],
 )
 
-current_user = fastapi_users.current_user()
+current_user = fastapi_users.current_user(optional=True)
 current_active_user = fastapi_users.current_user(active=True)
 current_active_verified_user = fastapi_users.current_user(active=True, verified=True)
 current_superuser = fastapi_users.current_user(active=True, superuser=True)
