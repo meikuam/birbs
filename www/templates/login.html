@@ -14,7 +14,7 @@
             let login_button = document.createElement("button");
             login_button.classList.add("btn");
             login_button.classList.add("m-3");
-            login_button.classList.add("col");
+            login_button.classList.add("row");
             login_button.classList.add("btn-primary");
             login_button.setAttribute("type", "button");
             login_button.textContent = "Войти";
@@ -42,12 +42,50 @@
                     });
             });
             login_button_div.appendChild(login_button);
+
+            let register_button_div = document.getElementById("register_button");
+            let register_button = document.createElement("button");
+            register_button.classList.add("btn");
+            register_button.classList.add("m-3");
+            register_button.classList.add("row");
+            register_button.classList.add("btn-primary");
+            register_button.setAttribute("type", "button");
+            register_button.textContent = "Зарегистрироваться";
+            register_button.addEventListener("click", function (event) {
+                event.preventDefault();
+                login_status_div.textContent = "";
+                console.log("register_button pressed");
+                let data = {
+                    "email": document.getElementById("username").value,
+                    "password": document.getElementById("password").value
+                }
+                fetch("/auth/register", {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                    .then(function(response) {
+                        if(response.status == 201) {
+                            window.location.replace("/");
+                        } else {
+                            login_status_div.textContent = "Ошибка";
+                        }
+                    })
+                    .catch(function() {
+                        console.log('register_button error');
+                        login_status_div.textContent = "Ошибка";
+                    });
+            });
+            register_button_div.appendChild(register_button);
         });
     </script>
     <style>
         body{
             background-image: url("https://r4.wallpaperflare.com/wallpaper/695/889/162/zebra-finch-wallpaper-a2a1a2b02d661e9b9af80255b0e80972.jpg");
-            background-color: #000000;
+            background-color: #F0F0F0;
           background-position-x: center;
           background-repeat: no-repeat;
           width: 100px;
@@ -56,9 +94,9 @@
     </style>
 </head>
 <body>
-    <div class="container" id="base">
+    <div class="container " id="base">
         <div class="p-4 m-6 justify-center">
-            <div class="rounded px-8 pt-6 pb-8 mb-4">
+            <div class="rounded px-8 pt-6 pb-10 mb-4">
                 <div class="mb-4">
                     <label class="block mb-2" for="username">
                       Email
@@ -72,6 +110,7 @@
                     <input class="border rounded w-full py-2 px-3 text-gray-700 mb-3 " id="password" name="password" type="password">
                 </div>
                 <div class="flex items-center justify-between" id="login_button"></div>
+                <div class="flex items-center justify-between" id="register_button"></div>
                 <div id="login_status"></div>
             </div>
         </div>

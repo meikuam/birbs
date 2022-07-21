@@ -3,39 +3,51 @@
     <head>
         <title>Birbs</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-        
+
         <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <script type="text/javascript">
             $(document).ready(function() {
                 let base_div = document.getElementById("base");
-                // let reset_button = document.createElement("button");
-                // reset_button.classList.add("btn");
-                // reset_button.classList.add("btn-primary");
-                // reset_button.setAttribute("type", "button");
-                // reset_button.textContent = "reset controller";
-                // reset_button.addEventListener("click", function (event) {
-                //     console.log("reset_button pressed");
-                //     fetch("/api/reset/serial", {
-                //         method: 'POST',
-                //         headers: {
-                //             'Accept': 'application/json',
-                //             'Content-Type': 'application/json'
-                //         }
-                //     })
-                //         .then(function(response) {
-                //             console.log("reset_button resp");
-                //         })
-                //         .catch(function() {
-                //             console.log('reset_button error');
-                //         });
-                // });
-                // base_div.appendChild(reset_button);
+
+                let current_user_email_div = document.getElementById("current_user");
+                fetch("/users/me", {})
+                    .then(function(response) {
+                        if(response.status == 200) {
+                            return response.json()
+                            //
+                        }
+                    })
+                    .then(function (data){
+                        current_user_email_div.textContent = "user: " + data["email"] + "\n superuser:" + data["is_superuser"];
+                    });
+
+                let logout_button = document.createElement("button");
+                logout_button.classList.add("btn");
+                logout_button.classList.add("m-3");
+                logout_button.classList.add("col");
+                logout_button.classList.add("btn-primary");
+                logout_button.setAttribute("type", "button");
+                logout_button.textContent = "Разлогиниться";
+                logout_button.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    console.log("logout_button pressed");
+                    fetch("/auth/jwt/logout", {
+                        method: 'POST'
+                    })
+                        .then(function(response) {
+                            window.location.replace("/");
+                        })
+                        .catch(function() {
+                            console.log('logout_button error');
+                        });
+                });
+                base_div.appendChild(logout_button);
             });
       </script>
     </head>
     <body>
     <div class="container" id="base">
-
+        <div id="current_user"></div>
         <div class="row h1" id="simple">
             <a href="simple">simple menu</a>
         </div>
