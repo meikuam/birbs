@@ -26,7 +26,11 @@ COPY docker/api/requirements.txt /tmp/requirements.txt
 RUN python3 -m pip install -r requirements.txt
 
 # create user
-RUN useradd -d /home/user -ms /bin/bash -u $UID -G sudo,video,spiuser,i2c user
+# TODO: fix gid for specific groups
+RUN groupadd -g 1001 spiuser
+RUN sudo groupadd -g 117 i2c
+
+RUN useradd -d /home/user -ms /bin/bash -G sudo,video,spiuser,i2c user
 RUN echo user:user | chpasswd
 
 RUN echo "export PATH=$PATH" >> /home/user/.bashrc

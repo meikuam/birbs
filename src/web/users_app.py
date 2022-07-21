@@ -11,6 +11,13 @@ from src.web.database.user_manager import current_superuser, current_user
 from src.web.database.users import User, create_db_and_tables
 from src.web.routes.users import auth_router, register_router, reset_password_router, verify_router, users_router, create_first_admin
 
+from src.web.routes.leds import leds_router
+from src.web.routes.feeder import feeder_router
+from src.web.routes.drinker import drinker_router
+from src.web.routes.reset import reset_router
+from src.web.routes.video import video_router
+
+
 users_app = FastAPI()
 
 users_app.include_router(
@@ -68,6 +75,27 @@ def login(request: Request, user: User = Depends(current_user)):
         return templates.TemplateResponse("login.html", {"request": request})
 
 
+@users_app.get("/leds")
+async def index(request: Request):
+    return templates.TemplateResponse("leds.html", {"request": request})
+
+@users_app.get("/drinker")
+async def index(request: Request):
+    return templates.TemplateResponse("drinker.html", {"request": request})
+
+@users_app.get("/feeder")
+async def index(request: Request):
+    return templates.TemplateResponse("feeder.html", {"request": request})
+
+
+@users_app.get("/video")
+async def index(request: Request):
+    return templates.TemplateResponse("video.html", {"request": request})
+
+@users_app.get("/simple")
+async def index(request: Request):
+    return templates.TemplateResponse("simple.html", {"request": request})
+
 
 templates = Jinja2Templates(directory="www/templates")
 
@@ -75,4 +103,4 @@ templates = Jinja2Templates(directory="www/templates")
 
 
 if __name__ == "__main__":
-    uvicorn.run("src.web.users_app:users_app", host="0.0.0.0", port=5000, log_level="info")
+    uvicorn.run("src.web.users_app:users_app", host="0.0.0.0", port=8080, log_level="info")
