@@ -1,5 +1,10 @@
 from typing import List
 import numpy as np
+import io
+import skimage.io as skio
+from PIL import Image
+import numpy as np
+
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from aiogram.dispatcher.filters import Text
@@ -20,10 +25,13 @@ async def send_message(chat_id: int, text: str):
 
 async def send_image(chat_id: int, image: np.ndarray):
     await bot.send_chat_action(chat_id, types.chat.ChatActions.UPLOAD_PHOTO)
-    image
-    with open('img.jpg', 'rb') as file:
-        await bot.send_photo(
-            chat_id=chat_id,
-            photo=file,
-            caption='none'
-        )
+    buffered = io.BytesIO()
+
+    img = Image.fromarray(image)
+    img.save(buffered, format="PNG")
+    buffered.seek(0)
+    await bot.send_photo(
+        chat_id=chat_id,
+        photo=buffered,
+        caption='none'
+    )

@@ -45,14 +45,27 @@ users_app.include_router(
     prefix="/users",
     tags=["users"],
 )
+users_app.include_router(
+    leds_router,
+    prefix="/api/leds",
+    tags=["leds"])
+users_app.include_router(
+    feeder_router,
+    prefix="/api/feeder",
+    tags=["feeder"])
+users_app.include_router(
+    drinker_router,
+    prefix="/api/drinker",
+    tags=["drinker"])
+users_app.include_router(
+    reset_router,
+    prefix="/api/reset",
+    tags=["reset"])
 
-
-@users_app.get("/authenticated-route")
-async def authenticated_route(user: User = Depends(current_superuser)):
-    if user.is_superuser:
-        return {"message": f"Hello, {user.email}!"}
-    else:
-        return {"message": "fuuuu"}
+users_app.include_router(
+    video_router,
+    prefix="/api/video",
+    tags=["video"])
 
 @users_app.on_event("startup")
 async def on_startup():
