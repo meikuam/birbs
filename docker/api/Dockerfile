@@ -17,19 +17,13 @@ RUN apt update && apt install -y --no-install-recommends \
         libsm6 libxext6 \
         libgl1-mesa-glx \
         openssh-server \
-        python3-pip \
+        python3-pip python3-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # python install
 WORKDIR /tmp
-RUN curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-aarch64.sh
-RUN bash Miniconda3-latest-Linux-aarch64.sh -b -p /root/conda
-ENV PATH "/root/conda/bin:$PATH"
-COPY docker/api/environment.yml /tmp/environment.yml
-RUN conda env create -f environment.yml && \
-    conda init bash && \
-    conda clean -a
-RUN echo "conda activate birbs" >> ~/.bashrc
+COPY docker/api/requirements.txt /tmp/requirements.txt
+RUN python3 -m pip install -r requirements.txt
 
 # create user
 RUN useradd -d /home/user -ms /bin/bash -u $UID -G sudo,video,spiuser,i2c user

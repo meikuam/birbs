@@ -1,11 +1,12 @@
 from typing import Optional, Dict, List
-from fastapi import APIRouter, Request, Response, status
+from fastapi import APIRouter, Request, Response, status, Depends
 from fastapi.responses import StreamingResponse
 from fastapi import WebSocket
 import asyncio
 
 from src.camera.camera import CameraStream, get_available_camera_streams
-
+from src.web.database.user_manager import current_superuser
+from src.web.database.users import User
 
 video_router = APIRouter()
 
@@ -24,11 +25,11 @@ async def startup_event():
         cam_stream.stop()
 
 @video_router.get("/")
-def video_devices_endpoint():
+def video_devices_endpoint(user: User = Depends(current_superuser)):
     return {"devices": list(camera_stream.keys())}
 
 @video_router.get("/{device_id}")
-def video_endpoint(device_id: int, response: Response):
+def video_endpoint(device_id: int, response: Response, user: User = Depends(current_superuser)):
     if device_id not in camera_stream.keys():
         response.status_code = status.HTTP_400_BAD_REQUEST
         return None

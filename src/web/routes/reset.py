@@ -1,8 +1,10 @@
 import time
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Response, status, Depends
 
 from src.web.models.controller import ControllerIds
 from src.web.models.drinker import Drinker
+from src.web.database.user_manager import current_superuser
+from src.web.database.users import User
 
 from src.controller.controller_api import controller_api
 from src.controller.serial_api import reset_serial
@@ -10,7 +12,7 @@ from src.controller.serial_api import reset_serial
 reset_router = APIRouter()
 
 @reset_router.post("/serial")
-async def reset_serial_controller_endpoint():
+async def reset_serial_controller_endpoint(user: User = Depends(current_superuser)):
     # we open serial port and it resets controller
     try:
         # get feeder params

@@ -7,7 +7,7 @@ from fastapi import FastAPI, Request, Response, status, Depends
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from src.web.database.user_manager import current_active_user, current_user
+from src.web.database.user_manager import current_superuser, current_user
 from src.web.database.users import User, create_db_and_tables
 from src.web.routes.users import auth_router, register_router, reset_password_router, verify_router, users_router, create_first_admin
 
@@ -40,10 +40,12 @@ users_app.include_router(
 )
 
 
-# @users_app.get("/authenticated-route")
-# async def authenticated_route(user: User = Depends(current_active_user)):
-#     return {"message": f"Hello, {user.email}!"}
-
+@users_app.get("/authenticated-route")
+async def authenticated_route(user: User = Depends(current_superuser)):
+    if user.is_superuser:
+        return {"message": f"Hello, {user.email}!"}
+    else:
+        return {"message": "fuuuu"}
 
 @users_app.on_event("startup")
 async def on_startup():

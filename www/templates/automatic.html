@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>automatic</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/solid.min.js" integrity="sha512-wabaor0DW08KSK5TQlRIyYOpDrAfJxl5J0FRzH0dNNhGJbeUpHaNj7up3Kr2Bwz/abLvVcJvDrJL+RLFcyGIkg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/brands.min.js" integrity="sha512-oPuIMrT4JN6Cw359VQkuI0OPn1reFOKJm1YUOjXxgIzMmNMY7g4jenNcJdYcF3dt90WyNajzivr3vZFSzgqLow==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/fontawesome.min.js" integrity="sha512-PoFg70xtc+rAkD9xsjaZwIMkhkgbl1TkoaRrgucfsct7SVy9KvTj5LtECit+ZjQ3ts+7xWzgfHOGzdolfWEgrw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script defer="" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/prism.min.js" integrity="sha512-YBk7HhgDZvBxmtOfUdvX0z8IH2d10Hp3aEygaMNhtF8fSOvBZ16D/1bXZTJV6ndk/L/DlXxYStP8jrF77v2MIg==" crossorigin="anonymous"></script>
+    <script defer="" src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/components/prism-javascript.min.js" integrity="sha512-I4ZWqUpk7wqHcm7Gkv7k4IdgrDUTlGm1a7xeqyduqZLWeoGOn2E9us4XNBEDGclpk+6d1CmqIHYwmoyyL59zeA==" crossorigin="anonymous"></script>
+
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <!-- Popperjs -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.2/dist/umd/popper.min.js" crossorigin="anonymous"></script>
+    <!-- Tempus Dominus JavaScript -->
+    <script src="https://cdn.jsdelivr.net/gh/Eonasdan/tempus-dominus@master/dist/js/tempus-dominus.js" crossorigin="anonymous"></script>
+    <!-- Tempus Dominus Styles -->
+    <link href="https://cdn.jsdelivr.net/gh/Eonasdan/tempus-dominus@master/dist/css/tempus-dominus.css" rel="stylesheet" crossorigin="anonymous">
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function (event) {
+            let base_div = document.getElementById("leds");
+            // base_div.classList.add("col");
+            //
+            // let leds_state = document.createElement("input");
+            // leds_state.id = "led_state";
+            // leds_state.classList.add("btn-check");
+            // leds_state.classList.add("col");
+            // leds_state.setAttribute("type", "checkbox");
+            // let leds_state_label = document.createElement("label");
+            // leds_state_label.classList.add("btn");
+            // leds_state_label.classList.add("btn-outline-primary");
+            // leds_state_label.setAttribute("for", "led_state");
+            // leds_state_label.textContent = "Вкл/Выкл";
+            // leds_state.addEventListener("change", function (event) {
+            //     console.log("leds_state pressed");
+            //     fetch("/api/leds/", {
+            //         method: 'POST',
+            //         headers: {
+            //             'Accept': 'application/json',
+            //             'Content-Type': 'application/json'
+            //         },
+            //         body: JSON.stringify({
+            //             "state": leds_state.checked
+            //         })
+            //     })
+            //         .then(function(response) {
+            //             console.log("leds_range input");
+            //         })
+            //         .catch(function() {
+            //             console.log('leds_range error');
+            //         });
+            // });
+            // base_div.appendChild(leds_state);
+            // base_div.appendChild(leds_state_label);
+            //
+            //
+            // let leds_range = document.createElement("input");
+            // leds_range.type = "range";
+            // leds_range.classList.add("form-range");
+            // leds_range.min = 0;
+            // leds_range.max = 255;
+            // leds_range.step = 5;
+            // leds_range.addEventListener("input", function (event) {
+            //     console.log("leds_range input");
+            //     fetch("/api/leds/", {
+            //         method: 'POST',
+            //         headers: {
+            //             'Accept': 'application/json',
+            //             'Content-Type': 'application/json'
+            //         },
+            //         body: JSON.stringify({
+            //             "value": leds_range.value
+            //         })
+            //     })
+            //         .then(function(response) {
+            //             console.log("leds_range input");
+            //         })
+            //         .catch(function() {
+            //             console.log('leds_range error');
+            //         });
+            // });
+            // base_div.appendChild(leds_range);
+            //
+            //
+            // var timeout = setTimeout(updateStatus, 10);
+            //
+            // function updateStatus() {
+            //
+            //     fetch("/api/leds/", {
+            //         method: 'GET',
+            //         headers: {
+            //             'Accept': 'application/json',
+            //             'Content-Type': 'application/json'
+            //         }
+            //     })
+            //         .then(function(response) {
+            //             return response.json()
+            //         })
+            //         .then(function(data){
+            //             console.log('got responce', data);
+            //             leds_state.checked = data['state'];
+            //             leds_range.value = data['value'];
+            //         })
+            //         .catch(function() {
+            //             console.log('get status error');
+            //         });
+            //
+            //     timeout = setTimeout(updateStatus, 2000);
+            // }
+
+        let picker = new tempusDominus.TempusDominus(document.getElementById('datetimepicker3'), {
+           display: {
+             components: {
+               decades: false,
+               year: false,
+               month: false,
+               date: false,
+               hours: true,
+               minutes: true,
+               seconds: false
+             },
+             inline: true
+           }
+         });
+        // picker.addEventListener("click", function (event){
+        //
+        // });
+        });
+    </script>
+</head>
+<body>
+
+  <div class="container">
+    <div id="automatic"></div>
+    <div class="row">
+        <a href="/">back</a>
+    </div>
+    <div class="container">
+         <div
+           class='log-event'
+           id='datetimepicker3'
+         >
+         </div>
+<!--         <div-->
+<!--             class='input-group'-->
+<!--             id='datetimepicker3'-->
+<!--             data-td-target-input='nearest'-->
+<!--             data-td-target-toggle='nearest'-->
+<!--         >-->
+<!--           <input-->
+<!--             id='datetimepicker3Input'-->
+<!--             type='text'-->
+<!--             class='form-control'-->
+<!--             data-td-target='#datetimepicker3'-->
+<!--           />-->
+<!--           <span-->
+<!--             class='input-group-text'-->
+<!--             data-td-target='#datetimepicker3'-->
+<!--             data-td-toggle='datetimepicker'-->
+<!--           >-->
+<!--             <span class='fa-solid fa-clock'></span>-->
+<!--           </span>-->
+<!--         </div>-->
+    </div>
+  </div>
+</body>
+</html>
