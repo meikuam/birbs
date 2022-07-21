@@ -21,95 +21,41 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function (event) {
-            let base_div = document.getElementById("leds");
-            // base_div.classList.add("col");
-            //
-            // let leds_state = document.createElement("input");
-            // leds_state.id = "led_state";
-            // leds_state.classList.add("btn-check");
-            // leds_state.classList.add("col");
-            // leds_state.setAttribute("type", "checkbox");
-            // let leds_state_label = document.createElement("label");
-            // leds_state_label.classList.add("btn");
-            // leds_state_label.classList.add("btn-outline-primary");
-            // leds_state_label.setAttribute("for", "led_state");
-            // leds_state_label.textContent = "Вкл/Выкл";
-            // leds_state.addEventListener("change", function (event) {
-            //     console.log("leds_state pressed");
-            //     fetch("/api/leds/", {
-            //         method: 'POST',
-            //         headers: {
-            //             'Accept': 'application/json',
-            //             'Content-Type': 'application/json'
-            //         },
-            //         body: JSON.stringify({
-            //             "state": leds_state.checked
-            //         })
-            //     })
-            //         .then(function(response) {
-            //             console.log("leds_range input");
-            //         })
-            //         .catch(function() {
-            //             console.log('leds_range error');
-            //         });
-            // });
-            // base_div.appendChild(leds_state);
-            // base_div.appendChild(leds_state_label);
-            //
-            //
-            // let leds_range = document.createElement("input");
-            // leds_range.type = "range";
-            // leds_range.classList.add("form-range");
-            // leds_range.min = 0;
-            // leds_range.max = 255;
-            // leds_range.step = 5;
-            // leds_range.addEventListener("input", function (event) {
-            //     console.log("leds_range input");
-            //     fetch("/api/leds/", {
-            //         method: 'POST',
-            //         headers: {
-            //             'Accept': 'application/json',
-            //             'Content-Type': 'application/json'
-            //         },
-            //         body: JSON.stringify({
-            //             "value": leds_range.value
-            //         })
-            //     })
-            //         .then(function(response) {
-            //             console.log("leds_range input");
-            //         })
-            //         .catch(function() {
-            //             console.log('leds_range error');
-            //         });
-            // });
-            // base_div.appendChild(leds_range);
-            //
-            //
-            // var timeout = setTimeout(updateStatus, 10);
-            //
-            // function updateStatus() {
-            //
-            //     fetch("/api/leds/", {
-            //         method: 'GET',
-            //         headers: {
-            //             'Accept': 'application/json',
-            //             'Content-Type': 'application/json'
-            //         }
-            //     })
-            //         .then(function(response) {
-            //             return response.json()
-            //         })
-            //         .then(function(data){
-            //             console.log('got responce', data);
-            //             leds_state.checked = data['state'];
-            //             leds_range.value = data['value'];
-            //         })
-            //         .catch(function() {
-            //             console.log('get status error');
-            //         });
-            //
-            //     timeout = setTimeout(updateStatus, 2000);
-            // }
+            let base_div = document.getElementById("base");
+
+            let current_user_email_div = document.getElementById("current_user");
+            fetch("/users/me", {})
+                .then(function(response) {
+                    if(response.status == 200) {
+                        return response.json()
+                        //
+                    }
+                })
+                .then(function (data){
+                    current_user_email_div.textContent = "user: " + data["email"] + "\n superuser:" + data["is_superuser"];
+                });
+
+            let logout_button = document.createElement("button");
+            logout_button.classList.add("btn");
+            logout_button.classList.add("m-3");
+            logout_button.classList.add("col");
+            logout_button.classList.add("btn-primary");
+            logout_button.setAttribute("type", "button");
+            logout_button.textContent = "Разлогиниться";
+            logout_button.addEventListener("click", function (event) {
+                event.preventDefault();
+                console.log("logout_button pressed");
+                fetch("/auth/jwt/logout", {
+                    method: 'POST'
+                })
+                    .then(function(response) {
+                        window.location.replace("/");
+                    })
+                    .catch(function() {
+                        console.log('logout_button error');
+                    });
+            });
+            base_div.appendChild(logout_button);
 
         let picker = new tempusDominus.TempusDominus(document.getElementById('datetimepicker3'), {
            display: {
@@ -133,7 +79,8 @@
 </head>
 <body>
 
-  <div class="container">
+  <div class="container" id="base">
+    <div id="current_user"></div>
     <div id="automatic"></div>
     <div class="row">
         <a href="/">back</a>
@@ -144,26 +91,6 @@
            id='datetimepicker3'
          >
          </div>
-<!--         <div-->
-<!--             class='input-group'-->
-<!--             id='datetimepicker3'-->
-<!--             data-td-target-input='nearest'-->
-<!--             data-td-target-toggle='nearest'-->
-<!--         >-->
-<!--           <input-->
-<!--             id='datetimepicker3Input'-->
-<!--             type='text'-->
-<!--             class='form-control'-->
-<!--             data-td-target='#datetimepicker3'-->
-<!--           />-->
-<!--           <span-->
-<!--             class='input-group-text'-->
-<!--             data-td-target='#datetimepicker3'-->
-<!--             data-td-toggle='datetimepicker'-->
-<!--           >-->
-<!--             <span class='fa-solid fa-clock'></span>-->
-<!--           </span>-->
-<!--         </div>-->
     </div>
   </div>
 </body>

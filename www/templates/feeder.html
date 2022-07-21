@@ -8,7 +8,41 @@
         <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <script type="text/javascript">
             $(document).ready(function() {
+                let base_div = document.getElementById("base");
 
+                let current_user_email_div = document.getElementById("current_user");
+                fetch("/users/me", {})
+                    .then(function(response) {
+                        if(response.status == 200) {
+                            return response.json()
+                            //
+                        }
+                    })
+                    .then(function (data){
+                        current_user_email_div.textContent = "user: " + data["email"] + "\n superuser:" + data["is_superuser"];
+                    });
+
+                let logout_button = document.createElement("button");
+                logout_button.classList.add("btn");
+                logout_button.classList.add("m-3");
+                logout_button.classList.add("col");
+                logout_button.classList.add("btn-primary");
+                logout_button.setAttribute("type", "button");
+                logout_button.textContent = "Разлогиниться";
+                logout_button.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    console.log("logout_button pressed");
+                    fetch("/auth/jwt/logout", {
+                        method: 'POST'
+                    })
+                        .then(function(response) {
+                            window.location.replace("/");
+                        })
+                        .catch(function() {
+                            console.log('logout_button error');
+                        });
+                });
+                base_div.appendChild(logout_button);
 
                 let feeder_div = document.getElementById("feeder");
                 fetch("/api/feeder/", {
@@ -337,7 +371,8 @@
 
     </head>
     <body>
-    <div class="container">
+    <div class="container", id="base">
+        <div id="current_user"></div>
         <div class="row" id="feeder">
 
         </div>

@@ -73,13 +73,6 @@ async def on_startup():
     await create_db_and_tables()
     await create_first_admin()
 
-@users_app.get("/")
-def index(request: Request, user: User = Depends(current_user)):
-    if user is not None:
-        return templates.TemplateResponse("index.html", {"request": request})
-    else:
-        return RedirectResponse("/login")
-
 @users_app.get("/login")
 def login(request: Request, user: User = Depends(current_user)):
     if user is not None:
@@ -87,28 +80,56 @@ def login(request: Request, user: User = Depends(current_user)):
     else:
         return templates.TemplateResponse("login.html", {"request": request})
 
+@users_app.get("/")
+def index(request: Request, user: User = Depends(current_user)):
+    if user is not None:
+        return templates.TemplateResponse("index.html", {"request": request})
+    else:
+        return RedirectResponse("/login")
+
 
 @users_app.get("/leds")
-async def index(request: Request):
-    return templates.TemplateResponse("leds.html", {"request": request})
+async def index(request: Request, user: User = Depends(current_user)):
+    if user is not None:
+        return templates.TemplateResponse("leds.html", {"request": request})
+    else:
+        return RedirectResponse("/login")
 
 @users_app.get("/drinker")
-async def index(request: Request):
-    return templates.TemplateResponse("drinker.html", {"request": request})
+async def index(request: Request, user: User = Depends(current_user)):
+    if user is not None:
+        return templates.TemplateResponse("drinker.html", {"request": request})
+    else:
+        return RedirectResponse("/")
 
 @users_app.get("/feeder")
-async def index(request: Request):
-    return templates.TemplateResponse("feeder.html", {"request": request})
+async def index(request: Request, user: User = Depends(current_user)):
+    if user is not None:
+        return templates.TemplateResponse("feeder.html", {"request": request})
+    else:
+        return RedirectResponse("/")
 
 
 @users_app.get("/video")
-async def index(request: Request):
-    return templates.TemplateResponse("video.html", {"request": request})
+async def index(request: Request, user: User = Depends(current_user)):
+    if user is not None:
+        return templates.TemplateResponse("video.html", {"request": request})
+    else:
+        return RedirectResponse("/")
 
 @users_app.get("/simple")
-async def index(request: Request):
-    return templates.TemplateResponse("simple.html", {"request": request})
+async def index(request: Request, user: User = Depends(current_user)):
+    if user is not None:
+        return templates.TemplateResponse("simple.html", {"request": request})
+    else:
+        return RedirectResponse("/")
 
+@users_app.get("/automatic")
+async def index(request: Request, user: User = Depends(current_user)):
+    if user is not None:
+        return templates.TemplateResponse("automatic.html", {"request": request})
+    else:
+        return RedirectResponse("/")
 
 templates = Jinja2Templates(directory="www/templates")
 

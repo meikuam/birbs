@@ -7,7 +7,43 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script>
-                document.addEventListener('DOMContentLoaded', function (event) {
+        document.addEventListener('DOMContentLoaded', function (event) {
+            let base_div = document.getElementById("base");
+
+            let current_user_email_div = document.getElementById("current_user");
+            fetch("/users/me", {})
+                .then(function(response) {
+                    if(response.status == 200) {
+                        return response.json()
+                        //
+                    }
+                })
+                .then(function (data){
+                    current_user_email_div.textContent = "user: " + data["email"] + "\n superuser:" + data["is_superuser"];
+                });
+
+            let logout_button = document.createElement("button");
+            logout_button.classList.add("btn");
+            logout_button.classList.add("m-3");
+            logout_button.classList.add("col");
+            logout_button.classList.add("btn-primary");
+            logout_button.setAttribute("type", "button");
+            logout_button.textContent = "Разлогиниться";
+            logout_button.addEventListener("click", function (event) {
+                event.preventDefault();
+                console.log("logout_button pressed");
+                fetch("/auth/jwt/logout", {
+                    method: 'POST'
+                })
+                    .then(function(response) {
+                        window.location.replace("/");
+                    })
+                    .catch(function() {
+                        console.log('logout_button error');
+                    });
+            });
+            base_div.appendChild(logout_button);
+
             let leds_base_div = document.getElementById("leds");
 
             let leds_controller = document.createElement("div");
@@ -480,7 +516,8 @@
         покормить в кормушку
 -->
 
-  <div class="container">
+  <div class="container" id="base">
+      <div id="current_user"></div>
       <div class="row"  id="leds"></div>
       <div class="row" id="drinker"></div>
       <div class="row" id="feeder">
