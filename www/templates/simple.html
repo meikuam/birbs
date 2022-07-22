@@ -75,7 +75,6 @@
                 })
                     .then(function(response) {
                         console.log("leds_state input");
-                        updateLed();
                     })
                     .catch(function() {
                         console.log('leds_state error');
@@ -358,6 +357,7 @@
                         data["controller_ids"].forEach(function (controller_id) {
                             let feeder_controller = document.createElement("div");
                             feeder_controller.classList.add("row");
+                            feeder_controller.classList.add("border");
                             let feeder_label = document.createElement("div");
                             feeder_label.textContent = "Кормушка " + controller_id;
                             feeder_controller.appendChild(feeder_label);
@@ -520,7 +520,7 @@
       <div id="current_user"></div>
       <div class="row"  id="leds"></div>
       <div class="row" id="drinker"></div>
-      <div class="row" id="feeder">
+      <div class="row" id="feeder"></div>
       <div class="row py-md-5">
           <a href="/">back</a>
       </div>

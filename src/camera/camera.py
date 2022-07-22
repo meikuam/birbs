@@ -7,6 +7,7 @@ from typing import List
 from threading import Thread, Lock
 from datetime import datetime
 
+
 def image_put_text(image: np.ndarray, text: str, bottom_left_point: List[int]) -> np.ndarray:
     image = cv2.putText(
         img=image,
@@ -71,16 +72,19 @@ class CameraStream:
         self.set_resolution(current_width, current_height)
         return [max_width, max_height]
 
-    def get_frame(self):
+    def get_frame(self, encode=True):
         while True:
             with self.lock:
                 if self.output is None:
                     continue
                 image = self.output.copy()
-            flag, image = cv2.imencode('.jpg', image)
-            if not flag:
-                continue
-            yield  b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + bytearray(image) + b'\r\n'
+            if encode:
+                flag, image = cv2.imencode('.jpg', image)
+                if not flag:
+                    continue
+                yield b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + bytearray(image) + b'\r\n'
+            else:
+                yield image
 
     def stream_function(self):
         while self.stream_running:

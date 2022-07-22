@@ -19,14 +19,17 @@ camera_stream: Dict[int, CameraStream] = get_available_camera_streams()
 # for key, item in camera_stream.items():
 #     item.start()
 
+
 @video_router.on_event("shutdown")
 async def startup_event():
     for id, cam_stream in camera_stream.items():
         cam_stream.stop()
 
+
 @video_router.get("/")
 def video_devices_endpoint(user: User = Depends(current_superuser)):
     return {"devices": list(camera_stream.keys())}
+
 
 @video_router.get("/{device_id}")
 def video_endpoint(device_id: int, response: Response, user: User = Depends(current_superuser)):

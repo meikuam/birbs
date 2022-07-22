@@ -28,20 +28,27 @@ class Singleton(type):
 class ControllerApi(metaclass=Singleton):
 
     def __init__(self, devpath="/dev/spidev1.0", max_speed=3000):
-        self.spi = periphery.SPI(
-            devpath=devpath,
-            mode=0,
-            max_speed=max_speed,
-            bit_order="msb",
-            bits_per_word=8)
+        self.devpath = devpath
+        self.max_speed = max_speed
+        try:
+            self.spi = periphery.SPI(
+                devpath=self.devpath,
+                mode=0,
+                max_speed=self.max_speed,
+                bit_order="msb",
+                bits_per_word=8)
+        except Exception as e:
+            self.spi = None
+            print(e)
         self.lock = Lock()
 
     def transfer(self, data_out: List[int]) -> List[int]:
         with self.lock:
+            assert isinstance(self.spi, periphery.SPI), "spi interface is not initialized"
             data_in = self.spi.transfer(data_out)
         return data_in
 
-    def leds_get(self)-> List[Any]:
+    def leds_get(self) -> List[Any]:
         """
         returns: led_state, led_value
         """

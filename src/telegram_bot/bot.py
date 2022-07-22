@@ -1,18 +1,17 @@
 from typing import List
 import numpy as np
 import io
-import skimage.io as skio
+# import skimage.io as skio
 from PIL import Image
 import numpy as np
 
 from aiogram import Bot, types
-from aiogram.dispatcher import Dispatcher
-from aiogram.dispatcher.filters import Text
 from src.utils import settings
 
 
 bot = Bot(token=settings.telegram["token"])
 
+chat_ids = [112643306]
 
 async def get_chat_ids() -> List[int]:
     updates = await bot.get_updates()
@@ -35,3 +34,12 @@ async def send_image(chat_id: int, image: np.ndarray):
         photo=buffered,
         caption='none'
     )
+
+async def broadcast_message(chat_ids: List[int], text: str):
+    for chat_id in chat_ids:
+        await send_message(chat_id, text)
+
+
+async def broadcast_image(chat_ids: List[int], image: np.ndarray):
+    for chat_id in chat_ids:
+        await send_image(chat_id, image)
