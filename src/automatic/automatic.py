@@ -22,7 +22,7 @@ class AutomaticDrinkerUpdater:
         # TODO: check if state was saved in db
         self.controller_id = controller_id
         self.state = AutomaticDrinker(
-            autofill_status=True,
+            autofill_status=False,
             logging_status=False,
             threshold_level=50
         )
@@ -53,7 +53,7 @@ class AutomaticFeederUpdater:
         # TODO: check if state was saved in db
         self.controller_id = controller_id
         self.state = AutomaticFeeder(
-            autofeed_status=True,
+            autofeed_status=False,
             logging_status=False,
             day_start_time=datetime.time(hour=9, minute=0),
             day_end_time=datetime.time(hour=18, minute=0),
