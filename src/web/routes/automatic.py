@@ -19,7 +19,6 @@ async def get_state_drinker_endpoint(controller_id: int, user: User = Depends(cu
         return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
 
-
 @automatic_router.post("/{controller_id}/drinker")
 async def set_state_drinker_endpoint(
         controller_id: int,
@@ -45,15 +44,6 @@ async def get_state_feeder_endpoint(controller_id: int, user: User = Depends(cur
         return [updater.state, AutomaticFeederFeedTimes(feed_times=updater.feed_times)]
     else:
         return Response(status_code=status.HTTP_400_BAD_REQUEST)
-
-
-# @automatic_router.get("/{controller_id}/feeder/feed_times", response_model=AutomaticFeederFeedTimes)
-# async def get_state_feeder_endpoint(controller_id: int, user: User = Depends(current_superuser)):
-#     updater = blade_runner.feeders.get(controller_id, None)
-#     if updater:
-#         return AutomaticFeederFeedTimes(feed_times=updater.feed_times)
-#     else:
-#         return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
 
 @automatic_router.post("/{controller_id}/feeder")

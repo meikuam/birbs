@@ -18,8 +18,10 @@ RUN apt update && apt install -y --no-install-recommends \
         libgl1-mesa-glx \
         openssh-server \
         python3-pip python3-dev \
+        tzdata \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+ENV TZ="Asia/Tomsk"
 # python install
 WORKDIR /tmp
 COPY docker/api/requirements.txt /tmp/requirements.txt

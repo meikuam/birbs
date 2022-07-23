@@ -26,15 +26,56 @@ class AutomaticDrinkerUpdater:
             logging_status=False,
             threshold_level=50
         )
+        self.start_time = datetime.time(hour=9, minute=0)
+        self.end_time = datetime.time(hour=22, minute=0)
+        self.fill_triggered = False
+
+    # async def empty_drinker(self):
+    #     pass
+
+    async def drinker_log_message(self, message):
+        try:
+            print(f"Fill drinker [{self.controller_id}]  {message}")
+            await broadcast_message(
+                chat_ids=chat_ids,
+                text=f"Fill drinker [{self.controller_id}]  {message}"
+            )
+        except Exception as e:
+            print(self.controller_id, self.state, e)
+
+    async def fill_drinker(self):
+        # чекаем уровень воды
+        try:
+            [
+                drinker_input_angle,
+                drinker_output_angle,
+                drinker_water_level_current,
+                drinker_empty_flag,
+                drinker_fill_flag
+            ] = controller_api.drinker_get_params(
+                controller_id=self.controller_id)
+        except Exception as e:
+            print(self.controller_id, self.state, e)
+            return
+
+        # чекаем можем ли мы затриггериться
+        if drinker_water_level_current >= self.state.threshold_level:
+            if not drinker_fill_flag:
+                try:
+                    controller_api.drinker_fill(controller_id=self.controller_id)
+                except Exception as e:
+                    print(self.controller_id, self.state, e)
+                if self.state.logging_status:
+                    await self.drinker_log_message(f"triggered current: {drinker_water_level_current}, thresh: {self.state.threshold_level}")
 
     async def routine(self):
         if self.state.autofill_status:
-            print("automatic drinker triggered", local_now(), self.state)
-            if self.state.logging_status:
-                await broadcast_message(chat_ids=chat_ids, text=f"auto drinker triggered {self.controller_id}")
+            local_time = local_now()
+            if self.start_time < local_time.time() < self.end_time:
+                await self.fill_drinker()
+            # print("automatic drinker triggered", local_now(), self.state)
 
-
-        await asyncio.sleep(30)
+        await asyncio.sleep(1)
 
     async def update_state(self, new_state: AutomaticDrinker):
         # TODO: we can check new state better
@@ -63,13 +104,19 @@ class AutomaticFeederUpdater:
         self.feed_times: List[datetime.time] = []
         self.update_feed_times()
 
+    async def empty_feeder(self):
+        pass
+
+    async def fill_feeder(self):
+        pass
+
     async def routine(self):
         if self.state.autofeed_status:
             print("automatic feeder triggered", local_now(), self.state)
             if self.state.logging_status:
                 await broadcast_message(chat_ids=chat_ids, text=f"auto feeder triggered {self.controller_id}")
 
-        await asyncio.sleep(30)
+        await asyncio.sleep(1)
 
     async def update_state(self, new_state: AutomaticFeeder):
         # TODO: we can check new state better

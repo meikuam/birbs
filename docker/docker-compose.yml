@@ -30,6 +30,7 @@ services:
     volumes:
       - ../:/home/user/birbs
       - /lib/modules:/lib/modules
+      - /run/dbus/system_bus_socket:/run/dbus/system_bus_socket:ro
       - /sys:/sys
     cap_add:
       - ALL
