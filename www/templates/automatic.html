@@ -252,8 +252,11 @@
 
                         var timeout = setTimeout(updateDrinkerStatus, 10);
                         function updateDrinkerStatus() {
-
-                            update_drinker_status();
+                            try {
+                                update_drinker_status();
+                            } catch (e) {
+                                console.log('unable update_drinker_status');
+                            }
                             timeout = setTimeout(updateDrinkerStatus, 5000);
                         }
 

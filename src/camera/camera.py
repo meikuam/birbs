@@ -3,7 +3,7 @@ import cv2
 import time
 from datetime import datetime
 import numpy as np
-from typing import List
+from typing import List, Dict
 from threading import Thread, Lock
 from datetime import datetime
 
@@ -100,7 +100,7 @@ class CameraStream:
                     self.output = img
             else:
                 print(self.src, "error get frame: ")
-                time.sleep(1)
+                time.sleep(0.5)
 
     def start(self):
         if not self.stream_running:
@@ -136,3 +136,43 @@ def get_available_camera_streams(key_index=True):
                 camera_streams[device] = camera_stream
 
     return camera_streams
+
+
+class CameraStreamsContianer:
+
+    def __init__(self):
+        self.device_mapping = {
+            1: {
+                "feeder": 3,
+                "drinker": 7
+            },
+            2: {
+                "feeder": 1,
+                "drinker": 5
+            }
+        }
+        self.device_id = None
+        self.camera_stream_dict: Dict[int, CameraStream] = get_available_camera_streams()
+
+    def get_device_ids(self):
+        return list(self.camera_stream_dict.keys())
+
+    def stop_streams(self):
+        for id, cam_stream in self.camera_stream_dict.items():
+            cam_stream.stop()
+
+    def select_stream(self, device_id: int):
+        for id, cam_stream in self.camera_stream_dict.items():
+            if id != device_id:
+                cam_stream.stop()
+        self.camera_stream_dict[device_id].start()
+        self.device_id = device_id
+
+    def get_frame(self, encode=True):
+        print("device id", self.device_id)
+        if self.device_id is None:
+            return None
+        return self.camera_stream_dict[self.device_id].get_frame(encode=encode)
+
+
+camera_streams_container = CameraStreamsContianer()
