@@ -1,7 +1,10 @@
 import asyncio
-from typing import List
+from typing import List, Callable, Tuple, Literal, Any
 import datetime
 
+import enum
+import numpy as np
+from src.camera.camera import camera_streams_container
 from src.time.time import local_today, local_now, time2datetime, timedelta2time
 from src.web.models.automatic import AutomaticDrinker, AutomaticFeeder
 from src.controller.controller_api import controller_api
@@ -16,7 +19,48 @@ class AutomaticUpdater:
         raise NotImplementedError("update_state not implemented")
 
 
-class AutomaticDrinkerUpdater:
+async def log_message(prefix: str, message: str):
+    try:
+        print(f"{prefix}  {message}")
+        await broadcast_message(
+            chat_ids=chat_ids,
+            text=f"{prefix} {message}"
+        )
+    except Exception as e:
+        print(prefix, message, e)
+
+
+async def log_image(self, image: np.ndarray,  caption: str = None):
+        try:
+            await broadcast_image(
+                chat_ids=chat_ids,
+                image=image,
+                caption=caption
+            )
+        except Exception as e:
+            print("log_image error:", e)
+
+
+def get_frame_from_stream(controller_id: int, device_type: Literal["feeder", "drinker"]):
+    device_id = camera_streams_container.device_mapping[controller_id][device_type]
+    stream_select_state = camera_streams_container.select_stream(device_id)
+    if stream_select_state:
+        return next(camera_streams_container.get_frame(encode=False))
+    else:
+        return None
+
+
+async def log_stream_frame(controller_id: int, device_type: Literal["feeder", "drinker"], alt_text: str = None):
+    frame = get_frame_from_stream(controller_id=controller_id, device_type=device_type)
+    if frame is not None:
+        await log_image(frame, caption=alt_text)
+    else:
+        if alt_text:
+            await log_message(prefix=f"{device_type} [{controller_id}]", message=alt_text)
+
+
+
+class AutomaticDrinkerUpdater(AutomaticUpdater):
 
     def __init__(self, controller_id: int):
         # TODO: check if state was saved in db
@@ -35,10 +79,10 @@ class AutomaticDrinkerUpdater:
 
     async def drinker_log_message(self, message):
         try:
-            print(f"Fill drinker [{self.controller_id}]  {message}")
+            print(f"Drinker [{self.controller_id}]  {message}")
             await broadcast_message(
                 chat_ids=chat_ids,
-                text=f"Fill drinker [{self.controller_id}]  {message}"
+                text=f"Drinker [{self.controller_id}]  {message}"
             )
         except Exception as e:
             print(self.controller_id, self.state, e)
@@ -66,16 +110,19 @@ class AutomaticDrinkerUpdater:
                 except Exception as e:
                     print(self.controller_id, self.state, e)
                 if self.state.logging_status:
-                    await self.drinker_log_message(f"triggered current: {drinker_water_level_current}, thresh: {self.state.threshold_level}")
+                    await log_message(
+                        prefix=f"Drinker [{self.controller_id}]",
+                        message=f"triggered current: {drinker_water_level_current}, thresh: {self.state.threshold_level}"
+                    )
 
     async def routine(self):
         if self.state.autofill_status:
-            local_time = local_now()
-            if self.start_time < local_time.time() < self.end_time:
+            local_time = local_now().time()
+            if self.start_time < local_time < self.end_time:
                 await self.fill_drinker()
             # print("automatic drinker triggered", local_now(), self.state)
 
-        await asyncio.sleep(1)
+
 
     async def update_state(self, new_state: AutomaticDrinker):
         # TODO: we can check new state better
@@ -88,7 +135,72 @@ class AutomaticDrinkerUpdater:
         print("state updated: ", self.state)
 
 
-class AutomaticFeederUpdater:
+class TriggerState(enum.Enum):
+    not_triggered = 0
+    triggering = 1
+    triggered = 2
+
+
+async def empty_feeder(self, controller_id: int):
+    await log_stream_frame(
+        controller_id=controller_id,
+        device_type="feeder",
+        alt_text="empty_feeder (before empty)")
+
+    controller_api.feeder_box_open(controller_id=controller_id)
+    await asyncio.sleep(5)
+
+    await log_stream_frame(
+        controller_id=controller_id,
+        device_type="feeder",
+        alt_text="empty_feeder (after box open)")
+
+    controller_api.feeder_box_close(controller_id=controller_id)
+    await asyncio.sleep(5)
+
+    await log_stream_frame(
+        controller_id=controller_id,
+        device_type="feeder",
+        alt_text="empty_feeder (after box close)")
+
+
+async def fill_feeder(self, controller_id: int, feed_amount: int):
+    await log_stream_frame(
+        controller_id=controller_id,
+        device_type="feeder",
+        alt_text="fill_feeder (before feed)")
+
+    for i in range(feed_amount):
+        controller_api.feeder_gate_feed(controller_id=controller_id)
+        await asyncio.sleep(5)
+
+        await log_stream_frame(
+            controller_id=controller_id,
+            device_type="feeder",
+            alt_text=f"fill_feeder (after feed {i})")
+
+
+class Trigger:
+
+    def __init__(self, trigger_time: datetime.time, func: Callable, args: Tuple[Any]):
+        self.trigger_time = trigger_time
+        self.func = func
+        self.args = args
+        self.state = TriggerState.not_triggered
+
+    async def check_trigger(self):
+        if self.state == TriggerState.not_triggered:
+            local_time = local_now().time()
+            if local_time > self.trigger_time:
+                self.state = TriggerState.triggering
+                if asyncio.iscoroutinefunction(self.func):
+                    await self.func(self.args)
+                else:
+                    self.func(self.args)
+                self.state = TriggerState.triggered
+
+
+class AutomaticFeederUpdater(AutomaticUpdater):
 
     def __init__(self, controller_id: int):
         # TODO: check if state was saved in db
@@ -102,21 +214,19 @@ class AutomaticFeederUpdater:
             feed_amount=3
         )
         self.feed_times: List[datetime.time] = []
+        self.feed_triggers: List[Trigger] = []
         self.update_feed_times()
-
-    async def empty_feeder(self):
-        pass
-
-    async def fill_feeder(self):
-        pass
 
     async def routine(self):
         if self.state.autofeed_status:
-            print("automatic feeder triggered", local_now(), self.state)
-            if self.state.logging_status:
-                await broadcast_message(chat_ids=chat_ids, text=f"auto feeder triggered {self.controller_id}")
-
-        await asyncio.sleep(1)
+            for trigger in self.feed_triggers:
+                # check if trigger not triggered
+                if trigger.state != TriggerState.triggered:
+                    # check trigger
+                    await trigger.check_trigger()
+                    # if trigger state not changed to triggered we don't check next triggers
+                    if trigger.state != TriggerState.triggered:
+                        break
 
     async def update_state(self, new_state: AutomaticFeeder):
         # TODO: we can check new state better
@@ -126,13 +236,16 @@ class AutomaticFeederUpdater:
             self.state.logging_status = new_state.logging_status
         if new_state.day_start_time is not None:
             self.state.day_start_time = new_state.day_start_time
+            self.update_feed_times()
         if new_state.day_end_time is not None:
             self.state.day_end_time = new_state.day_end_time
+            self.update_feed_times()
         if new_state.daily_feed_amount is not None:
             self.state.daily_feed_amount = new_state.daily_feed_amount
             self.update_feed_times()
         if new_state.feed_amount is not None:
             self.state.feed_amount = new_state.feed_amount
+            self.update_feed_times()
         print("state updated: ", self.state)
 
     def update_feed_times(self):
@@ -142,8 +255,23 @@ class AutomaticFeederUpdater:
         tdelta = t2 - t1
         tdelta_feeds = tdelta / self.state.daily_feed_amount
         self.feed_times = [self.state.day_start_time]
+        self.feed_triggers = [
+            Trigger(self.state.day_start_time, empty_feeder, (self.controller_id,)),
+            Trigger(self.state.day_start_time, fill_feeder, (self.controller_id, self.state.feed_amount, ))
+        ]
         for i in range(self.state.daily_feed_amount - 1):
-            self.feed_times.append((time2datetime(self.feed_times[-1]) + tdelta_feeds).time())
+            feed_time = (time2datetime(self.feed_times[-1]) + tdelta_feeds).time()
+            self.feed_times.append(feed_time)
+            self.feed_triggers.append(
+                Trigger(feed_time, fill_feeder, (self.controller_id, self.state.feed_amount,))
+            )
+
+        # check if some of triggers should be triggered now
+        local_time = local_now().time()
+        for trigger in self.feed_triggers:
+            if local_time > trigger.trigger_time:
+                trigger.state = TriggerState.triggered
+
 
 
 class AutomaticRunner:
@@ -170,6 +298,7 @@ class AutomaticRunner:
                     await feeder_updater.routine()
                 except Exception as e:
                     print("error at feeder_updater", e)
+            await asyncio.sleep(1)
 
 
 blade_runner = AutomaticRunner()
