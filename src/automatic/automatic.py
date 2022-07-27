@@ -11,14 +11,6 @@ from src.controller.controller_api import controller_api
 from src.telegram_bot.bot import chat_ids, broadcast_image, broadcast_message
 
 
-class AutomaticUpdater:
-    async def routine(self):
-        raise NotImplementedError("routine not implemented")
-
-    async def update_state(self, new_state):
-        raise NotImplementedError("update_state not implemented")
-
-
 async def log_message(prefix: str, message: str):
     try:
         print(f"{prefix}  {message}")
@@ -59,6 +51,42 @@ async def log_stream_frame(controller_id: int, device_type: Literal["feeder", "d
             await log_message(prefix=f"{device_type} [{controller_id}]", message=alt_text)
 
 
+class AutomaticUpdater:
+    async def routine(self):
+        raise NotImplementedError("routine not implemented")
+
+    async def update_state(self, new_state):
+        raise NotImplementedError("update_state not implemented")
+
+
+async def fill_drinker(controller_id: int, threshold_level: int, logging_status: bool):
+    # чекаем уровень воды
+    try:
+        [
+            drinker_input_angle,
+            drinker_output_angle,
+            drinker_water_level_current,
+            drinker_empty_flag,
+            drinker_fill_flag
+        ] = controller_api.drinker_get_params(
+            controller_id=controller_id)
+    except Exception as e:
+        print(f"Error: controller_api.drinker_get_params {controller_id}, {e}")
+        return
+
+    # чекаем можем ли мы затриггериться
+    if drinker_water_level_current >= threshold_level:
+        if not drinker_fill_flag:
+            try:
+                controller_api.drinker_fill(controller_id=controller_id)
+            except Exception as e:
+                print(f"Error: controller_api.drinker_fill {controller_id}, {e}")
+            if logging_status:
+                await log_message(
+                    prefix=f"Drinker [{controller_id}]",
+                    message=f"triggered current: {drinker_water_level_current}, thresh: {threshold_level}"
+                )
+
 
 class AutomaticDrinkerUpdater(AutomaticUpdater):
 
@@ -68,61 +96,17 @@ class AutomaticDrinkerUpdater(AutomaticUpdater):
         self.state = AutomaticDrinker(
             autofill_status=False,
             logging_status=False,
-            threshold_level=50
+            threshold_level=50,
+            day_start_time=datetime.time(hour=9, minute=0),
+            day_end_time=datetime.time(hour=22, minute=0)
         )
-        self.start_time = datetime.time(hour=9, minute=0)
-        self.end_time = datetime.time(hour=22, minute=0)
         self.fill_triggered = False
-
-    # async def empty_drinker(self):
-    #     pass
-
-    async def drinker_log_message(self, message):
-        try:
-            print(f"Drinker [{self.controller_id}]  {message}")
-            await broadcast_message(
-                chat_ids=chat_ids,
-                text=f"Drinker [{self.controller_id}]  {message}"
-            )
-        except Exception as e:
-            print(self.controller_id, self.state, e)
-
-    async def fill_drinker(self):
-        # чекаем уровень воды
-        try:
-            [
-                drinker_input_angle,
-                drinker_output_angle,
-                drinker_water_level_current,
-                drinker_empty_flag,
-                drinker_fill_flag
-            ] = controller_api.drinker_get_params(
-                controller_id=self.controller_id)
-        except Exception as e:
-            print(self.controller_id, self.state, e)
-            return
-
-        # чекаем можем ли мы затриггериться
-        if drinker_water_level_current >= self.state.threshold_level:
-            if not drinker_fill_flag:
-                try:
-                    controller_api.drinker_fill(controller_id=self.controller_id)
-                except Exception as e:
-                    print(self.controller_id, self.state, e)
-                if self.state.logging_status:
-                    await log_message(
-                        prefix=f"Drinker [{self.controller_id}]",
-                        message=f"triggered current: {drinker_water_level_current}, thresh: {self.state.threshold_level}"
-                    )
 
     async def routine(self):
         if self.state.autofill_status:
             local_time = local_now().time()
-            if self.start_time < local_time < self.end_time:
-                await self.fill_drinker()
-            # print("automatic drinker triggered", local_now(), self.state)
-
-
+            if self.state.day_start_time < local_time < self.state.day_end_time:
+                await fill_drinker(self.controller_id, self.state.threshold_level, self.state.logging_status)
 
     async def update_state(self, new_state: AutomaticDrinker):
         # TODO: we can check new state better
@@ -141,46 +125,50 @@ class TriggerState(enum.Enum):
     triggered = 2
 
 
-async def empty_feeder(self, controller_id: int):
-    await log_stream_frame(
-        controller_id=controller_id,
-        device_type="feeder",
-        alt_text="empty_feeder (before empty)")
+async def empty_feeder(controller_id: int, logging_status: bool):
+    if logging_status:
+        await log_stream_frame(
+            controller_id=controller_id,
+            device_type="feeder",
+            alt_text="empty_feeder (before empty)")
 
     controller_api.feeder_box_open(controller_id=controller_id)
     await asyncio.sleep(5)
 
-    await log_stream_frame(
-        controller_id=controller_id,
-        device_type="feeder",
-        alt_text="empty_feeder (after box open)")
+    if logging_status:
+        await log_stream_frame(
+            controller_id=controller_id,
+            device_type="feeder",
+            alt_text="empty_feeder (after box open)")
 
     controller_api.feeder_box_close(controller_id=controller_id)
     await asyncio.sleep(5)
 
-    await log_stream_frame(
-        controller_id=controller_id,
-        device_type="feeder",
-        alt_text="empty_feeder (after box close)")
+    if logging_status:
+        await log_stream_frame(
+            controller_id=controller_id,
+            device_type="feeder",
+            alt_text="empty_feeder (after box close)")
 
 
-async def fill_feeder(self, controller_id: int, feed_amount: int):
-    await log_stream_frame(
-        controller_id=controller_id,
-        device_type="feeder",
-        alt_text="fill_feeder (before feed)")
+async def fill_feeder(controller_id: int, feed_amount: int, logging_status: bool):
+    if logging_status:
+        await log_stream_frame(
+            controller_id=controller_id,
+            device_type="feeder",
+            alt_text="fill_feeder (before feed)")
 
     for i in range(feed_amount):
         controller_api.feeder_gate_feed(controller_id=controller_id)
         await asyncio.sleep(5)
+        if logging_status:
+            await log_stream_frame(
+                controller_id=controller_id,
+                device_type="feeder",
+                alt_text=f"fill_feeder (after feed {i})")
 
-        await log_stream_frame(
-            controller_id=controller_id,
-            device_type="feeder",
-            alt_text=f"fill_feeder (after feed {i})")
 
-
-class Trigger:
+class TimeTrigger:
 
     def __init__(self, trigger_time: datetime.time, func: Callable, args: Tuple[Any]):
         self.trigger_time = trigger_time
@@ -214,11 +202,12 @@ class AutomaticFeederUpdater(AutomaticUpdater):
             feed_amount=3
         )
         self.feed_times: List[datetime.time] = []
-        self.feed_triggers: List[Trigger] = []
+        self.feed_triggers: List[TimeTrigger] = []
         self.update_feed_times()
 
     async def routine(self):
         if self.state.autofeed_status:
+            #TODO: reset triggers after end of day
             for trigger in self.feed_triggers:
                 # check if trigger not triggered
                 if trigger.state != TriggerState.triggered:
@@ -249,29 +238,42 @@ class AutomaticFeederUpdater(AutomaticUpdater):
         print("state updated: ", self.state)
 
     def update_feed_times(self):
-        print("time delta ", time2datetime(self.state.day_end_time) - time2datetime(self.state.day_start_time))
+        # print("time delta ", time2datetime(self.state.day_end_time) - time2datetime(self.state.day_start_time))
         t2 = time2datetime(self.state.day_end_time)
         t1 = time2datetime(self.state.day_start_time)
         tdelta = t2 - t1
         tdelta_feeds = tdelta / self.state.daily_feed_amount
-        self.feed_times = [self.state.day_start_time]
-        self.feed_triggers = [
-            Trigger(self.state.day_start_time, empty_feeder, (self.controller_id,)),
-            Trigger(self.state.day_start_time, fill_feeder, (self.controller_id, self.state.feed_amount, ))
+
+        self.feed_times, self.feed_triggers = [], []
+
+        feed_times = [self.state.day_start_time]
+        feed_triggers = [
+            TimeTrigger(
+                trigger_time=self.state.day_start_time,
+                func=empty_feeder,
+                args=(self.controller_id, self.state.logging_status, )),
+            TimeTrigger(
+                trigger_time=self.state.day_start_time,
+                func=fill_feeder,
+                args=(self.controller_id, self.state.feed_amount, self.state.logging_status, ))
         ]
         for i in range(self.state.daily_feed_amount - 1):
-            feed_time = (time2datetime(self.feed_times[-1]) + tdelta_feeds).time()
-            self.feed_times.append(feed_time)
-            self.feed_triggers.append(
-                Trigger(feed_time, fill_feeder, (self.controller_id, self.state.feed_amount,))
+            feed_time = (time2datetime(feed_times[-1]) + tdelta_feeds).time()
+            feed_times.append(feed_time)
+            feed_triggers.append(
+                TimeTrigger(
+                    trigger_time=feed_time,
+                    func=fill_feeder,
+                    args=(self.controller_id, self.state.feed_amount, self.state.logging_status, ))
             )
 
         # check if some of triggers should be triggered now
         local_time = local_now().time()
-        for trigger in self.feed_triggers:
+        for trigger in feed_triggers:
             if local_time > trigger.trigger_time:
                 trigger.state = TriggerState.triggered
 
+        self.feed_times, self.feed_triggers = feed_times, feed_triggers
 
 
 class AutomaticRunner:

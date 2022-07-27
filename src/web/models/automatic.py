@@ -7,6 +7,8 @@ class AutomaticDrinker(BaseModel):
     autofill_status: Optional[bool]
     logging_status: Optional[bool]
     threshold_level: Optional[int]
+    day_start_time: Optional[datetime.time]
+    day_end_time: Optional[datetime.time]
 
 
 class AutomaticFeeder(BaseModel):
