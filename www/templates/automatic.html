@@ -328,12 +328,12 @@
                         logging_status_label.classList.add("btn");
                         logging_status_label.classList.add("col");
                         logging_status_label.classList.add("btn-outline-primary");
-                        logging_status_label.setAttribute("for", "logging_status" + controller_id);
+                        logging_status_label.setAttribute("for", "feeder_logging_status" + controller_id);
                         logging_status_label.textContent = "Логгирование Вкл/Выкл";
                         logging_status_label.classList.add("m-3");
 
                         let logging_status = document.createElement("input");
-                        logging_status.id = "logging_status" + controller_id;
+                        logging_status.id = "feeder_logging_status" + controller_id;
                         logging_status.setAttribute("type", "checkbox");
                         logging_status.addEventListener("click", function (event) {
                             console.log("logging_status pressed");

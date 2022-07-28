@@ -2,6 +2,7 @@ import asyncio
 from typing import List, Callable, Tuple, Literal, Any
 import datetime
 
+import cv2
 import enum
 import numpy as np
 from src.camera.camera import camera_streams_container
@@ -22,15 +23,15 @@ async def log_message(prefix: str, message: str):
         print(prefix, message, e)
 
 
-async def log_image(self, image: np.ndarray,  caption: str = None):
-        try:
-            await broadcast_image(
-                chat_ids=chat_ids,
-                image=image,
-                caption=caption
-            )
-        except Exception as e:
-            print("log_image error:", e)
+async def log_image(image: np.ndarray,  caption: str = None):
+    try:
+        await broadcast_image(
+            chat_ids=chat_ids,
+            image=image,
+            caption=caption
+        )
+    except Exception as e:
+        print("log_image error:", e)
 
 
 def get_frame_from_stream(controller_id: int, device_type: Literal["feeder", "drinker"]):
@@ -45,6 +46,7 @@ def get_frame_from_stream(controller_id: int, device_type: Literal["feeder", "dr
 async def log_stream_frame(controller_id: int, device_type: Literal["feeder", "drinker"], alt_text: str = None):
     frame = get_frame_from_stream(controller_id=controller_id, device_type=device_type)
     if frame is not None:
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         await log_image(frame, caption=alt_text)
     else:
         if alt_text:
@@ -105,11 +107,10 @@ class AutomaticDrinkerUpdater(AutomaticUpdater):
     async def routine(self):
         if self.state.autofill_status:
             local_time = local_now().time()
-            if self.state.day_start_time < local_time < self.state.day_end_time:
+            if self.state.day_start_time <= local_time <= self.state.day_end_time:
                 await fill_drinker(self.controller_id, self.state.threshold_level, self.state.logging_status)
 
     async def update_state(self, new_state: AutomaticDrinker):
-        # TODO: we can check new state better
         if new_state.autofill_status is not None:
             self.state.autofill_status = new_state.autofill_status
         if new_state.logging_status is not None:
@@ -131,7 +132,7 @@ async def empty_feeder(controller_id: int, logging_status: bool):
             controller_id=controller_id,
             device_type="feeder",
             alt_text="empty_feeder (before empty)")
-
+    print(local_now().time(), "feeder box open")
     controller_api.feeder_box_open(controller_id=controller_id)
     await asyncio.sleep(5)
 
@@ -140,7 +141,7 @@ async def empty_feeder(controller_id: int, logging_status: bool):
             controller_id=controller_id,
             device_type="feeder",
             alt_text="empty_feeder (after box open)")
-
+    print(local_now().time(), "feeder box close")
     controller_api.feeder_box_close(controller_id=controller_id)
     await asyncio.sleep(5)
 
@@ -159,6 +160,7 @@ async def fill_feeder(controller_id: int, feed_amount: int, logging_status: bool
             alt_text="fill_feeder (before feed)")
 
     for i in range(feed_amount):
+        print(local_now().time(), "feeder gate feed")
         controller_api.feeder_gate_feed(controller_id=controller_id)
         await asyncio.sleep(5)
         if logging_status:
@@ -180,11 +182,12 @@ class TimeTrigger:
         if self.state == TriggerState.not_triggered:
             local_time = local_now().time()
             if local_time > self.trigger_time:
+                print("triggered ", local_time)
                 self.state = TriggerState.triggering
                 if asyncio.iscoroutinefunction(self.func):
-                    await self.func(self.args)
+                    await self.func(*self.args)
                 else:
-                    self.func(self.args)
+                    self.func(*self.args)
                 self.state = TriggerState.triggered
 
 
@@ -207,35 +210,40 @@ class AutomaticFeederUpdater(AutomaticUpdater):
 
     async def routine(self):
         if self.state.autofeed_status:
-            #TODO: reset triggers after end of day
-            for trigger in self.feed_triggers:
-                # check if trigger not triggered
-                if trigger.state != TriggerState.triggered:
-                    # check trigger
-                    await trigger.check_trigger()
-                    # if trigger state not changed to triggered we don't check next triggers
+            local_time = local_now().time()
+            # print("start", self.state.day_start_time, "end", self.state.day_end_time, "curr", local_time)
+            if self.state.day_start_time <= local_time <= self.state.day_end_time:
+                # print(local_time, "check triggers")
+                for trigger in self.feed_triggers:
+                    # check if trigger not triggered
+                    print(trigger.state, trigger.trigger_time)
                     if trigger.state != TriggerState.triggered:
-                        break
+                        # check trigger
+                        await trigger.check_trigger()
+                        # if trigger state not changed to triggered we don't check next triggers
+                        if trigger.state != TriggerState.triggered:
+                            break
+            else:
+                # print(local_time, "reset triggers")
+                for trigger in self.feed_triggers:
+                    trigger.state = TriggerState.not_triggered
 
     async def update_state(self, new_state: AutomaticFeeder):
-        # TODO: we can check new state better
         if new_state.autofeed_status is not None:
             self.state.autofeed_status = new_state.autofeed_status
         if new_state.logging_status is not None:
             self.state.logging_status = new_state.logging_status
         if new_state.day_start_time is not None:
             self.state.day_start_time = new_state.day_start_time
-            self.update_feed_times()
         if new_state.day_end_time is not None:
             self.state.day_end_time = new_state.day_end_time
-            self.update_feed_times()
         if new_state.daily_feed_amount is not None:
             self.state.daily_feed_amount = new_state.daily_feed_amount
-            self.update_feed_times()
         if new_state.feed_amount is not None:
             self.state.feed_amount = new_state.feed_amount
-            self.update_feed_times()
-        print("state updated: ", self.state)
+
+        self.update_feed_times()
+        print("state updated: ", self.state, self.feed_times)
 
     def update_feed_times(self):
         # print("time delta ", time2datetime(self.state.day_end_time) - time2datetime(self.state.day_start_time))
