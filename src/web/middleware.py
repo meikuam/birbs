@@ -16,12 +16,12 @@ class CheckMiddleware(BaseHTTPMiddleware):
         self.register_endpoint = register_endpoint if register_endpoint[-1] == "/" else f"{register_endpoint}/"
 
         self.register_endpoint_timestamps: datetime.date = [local_now()]
-        self.register_endpoint_timestamps_max_len = 10
+        self.register_endpoint_timestamps_max_len = 5
         self.cooldown_date = local_now()
-        self.cooldown_timedelta = datetime.timedelta(minutes=0, seconds=10)
+        self.cooldown_timedelta = datetime.timedelta(minutes=10)
 
         # process endpoint paths
-        allowed_endpoints = list(set([endpoint.split("{")[0] for endpoint in allowed_endpoints]))
+        allowed_endpoints = list(set([endpoint.split("{")[0] for endpoint in allowed_endpoints])) + ["/favicon.ico"]
         allowed_endpoints = ["/".join(endpoint.split("/")[:3]) for endpoint in allowed_endpoints]
         allowed_endpoints = [endpoint if endpoint[-1] == "/" else f"{endpoint}/" for endpoint in allowed_endpoints]
         self.allowed_endpoints = allowed_endpoints
@@ -58,7 +58,7 @@ class CheckMiddleware(BaseHTTPMiddleware):
             if current_date < self.cooldown_date:
                 return Response(status_code=status.HTTP_403_FORBIDDEN)
 
-            if (self.register_endpoint_timestamps[-1] - self.register_endpoint_timestamps[0]).total_seconds() < datetime.timedelta(seconds=10).total_seconds():
+            if (self.register_endpoint_timestamps[-1] - self.register_endpoint_timestamps[0]).total_seconds() < datetime.timedelta(minutes=5).total_seconds():
                 self.cooldown_date = current_date + self.cooldown_timedelta
                 print(f"set cooldown date: {self.cooldown_date}")
                 return Response(status_code=status.HTTP_403_FORBIDDEN)

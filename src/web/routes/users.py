@@ -46,7 +46,7 @@ async def create_first_admin() -> bool:
                     select(func.count()).select_from(select(User).filter_by(is_superuser=True))
                 )
             ).scalar_one()
-            print("count", count)
+            # print("count", count)
         if count == 0:
             print("create user")
             await create_user(
