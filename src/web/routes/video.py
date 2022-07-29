@@ -29,7 +29,6 @@ def video_endpoint(device_id: int, response: Response, user: User = Depends(curr
         print("select stream")
         camera_streams_container.select_stream(device_id=device_id)
         print("make stream responce")
-        print(camera_streams_container.get_frame(encode=True))
         return StreamingResponse(
             camera_streams_container.get_frame(encode=True),
             media_type='multipart/x-mixed-replace; boundary=frame')

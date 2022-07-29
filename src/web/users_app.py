@@ -19,6 +19,7 @@ from src.web.routes.drinker import drinker_router
 from src.web.routes.reset import reset_router
 from src.web.routes.video import video_router
 from src.web.middleware import CheckMiddleware
+from content_size_limit_asgi import ContentSizeLimitMiddleware
 
 from src.automatic.automatic import blade_runner
 
@@ -144,9 +145,13 @@ async def index(request: Request, user: User = Depends(current_superuser)):
 
 templates = Jinja2Templates(directory="www/templates")
 users_app.add_middleware(
+    ContentSizeLimitMiddleware,
+    max_content_size=1024)
+users_app.add_middleware(
     middleware_class=CheckMiddleware,
     register_endpoint="/auth/register",
     allowed_endpoints=[route.path for route in users_app.routes])
+
 
 if __name__ == "__main__":
     uvicorn.run("src.web.users_app:users_app", host="0.0.0.0", port=8080, log_level="info")

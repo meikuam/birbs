@@ -216,7 +216,7 @@ class AutomaticFeederUpdater(AutomaticUpdater):
                 # print(local_time, "check triggers")
                 for trigger in self.feed_triggers:
                     # check if trigger not triggered
-                    print(trigger.state, trigger.trigger_time)
+                    # print(trigger.state, trigger.trigger_time)
                     if trigger.state != TriggerState.triggered:
                         # check trigger
                         await trigger.check_trigger()

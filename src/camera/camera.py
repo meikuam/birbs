@@ -169,10 +169,10 @@ class CameraStreamsContianer:
                 cam_stream.stop()
         self.camera_stream_dict[device_id].start()
         self.device_id = device_id
+        print("select", self.device_id)
         return True
 
     def get_frame(self, encode=True):
-        print("device id", self.device_id)
         if self.device_id is None:
             return None
         return self.camera_stream_dict[self.device_id].get_frame(encode=encode)

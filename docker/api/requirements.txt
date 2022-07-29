@@ -32,3 +32,4 @@ python-multipart==0.0.5
 aiohttp==3.8.1
 databases[postgresql]==0.5.3
 python-periphery==2.3.0
+content-size-limit-asgi==0.1.5

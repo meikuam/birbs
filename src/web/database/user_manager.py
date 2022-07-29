@@ -36,6 +36,12 @@ class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
         if len(password) < 8:
             raise InvalidPasswordException(
                 reason="Password should be at least 8 characters")
+        if len(password) > 25:
+            raise InvalidPasswordException(
+                reason="Password should be less then 25 characters")
+        if len(user.email) > 320:
+            raise InvalidPasswordException(
+                reason="email length should be less then 320 characters https://www.rfc-editor.org/rfc/rfc3696")
         if user.email in password:
             raise InvalidPasswordException(
                 reason="Password should not contain e-mail")
