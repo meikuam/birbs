@@ -18,10 +18,11 @@ from src.web.routes.feeder import feeder_router
 from src.web.routes.drinker import drinker_router
 from src.web.routes.reset import reset_router
 from src.web.routes.video import video_router
+from src.web.middleware import CheckMiddleware
 
 from src.automatic.automatic import blade_runner
 
-users_app = FastAPI()
+users_app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
 # fastapi_users
 users_app.include_router(
@@ -99,21 +100,21 @@ def index(request: Request, user: User = Depends(current_user)):
 
 
 @users_app.get("/leds", tags=["web"])
-async def index(request: Request, user: User = Depends(current_user)):
+async def index(request: Request, user: User = Depends(current_superuser)):
     if user is not None:
         return templates.TemplateResponse("leds.html", {"request": request})
     else:
         return RedirectResponse("/login")
 
 @users_app.get("/drinker", tags=["web"])
-async def index(request: Request, user: User = Depends(current_user)):
+async def index(request: Request, user: User = Depends(current_superuser)):
     if user is not None:
         return templates.TemplateResponse("drinker.html", {"request": request})
     else:
         return RedirectResponse("/")
 
 @users_app.get("/feeder", tags=["web"])
-async def index(request: Request, user: User = Depends(current_user)):
+async def index(request: Request, user: User = Depends(current_superuser)):
     if user is not None:
         return templates.TemplateResponse("feeder.html", {"request": request})
     else:
@@ -121,30 +122,31 @@ async def index(request: Request, user: User = Depends(current_user)):
 
 
 @users_app.get("/video", tags=["web"])
-async def index(request: Request, user: User = Depends(current_user)):
+async def index(request: Request, user: User = Depends(current_superuser)):
     if user is not None:
         return templates.TemplateResponse("video.html", {"request": request})
     else:
         return RedirectResponse("/")
 
 @users_app.get("/simple", tags=["web"])
-async def index(request: Request, user: User = Depends(current_user)):
+async def index(request: Request, user: User = Depends(current_superuser)):
     if user is not None:
         return templates.TemplateResponse("simple.html", {"request": request})
     else:
         return RedirectResponse("/")
 
 @users_app.get("/automatic", tags=["web"])
-async def index(request: Request, user: User = Depends(current_user)):
+async def index(request: Request, user: User = Depends(current_superuser)):
     if user is not None:
         return templates.TemplateResponse("automatic.html", {"request": request})
     else:
         return RedirectResponse("/")
 
 templates = Jinja2Templates(directory="www/templates")
-
-
-
+users_app.add_middleware(
+    middleware_class=CheckMiddleware,
+    register_endpoint="/auth/register",
+    allowed_endpoints=[route.path for route in users_app.routes])
 
 if __name__ == "__main__":
     uvicorn.run("src.web.users_app:users_app", host="0.0.0.0", port=8080, log_level="info")
