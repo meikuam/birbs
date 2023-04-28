@@ -80,8 +80,32 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 sudo usermod -aG docker $USER
 ```
 
-## 6. install arduino-cli
+## 6. install arduino-cli & compile code
+```
+mkdir ~/arduino-cli/bin
+curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=~/arduino-cli/bin sh
+echo 'export PATH="${HOME}/arduino-cli/bin:${PATH}"' >> ~/.bashrc
 
+arduino-cli core update-index
+arduino-cli core install arduino:avr
+arduino-cli lib install IRremote
+arduino-cli lib install NewPing
+arduino-cli lib install Servo
+
+# nano
+arduino-cli compile --fqbn arduino:avr:nano:cpu=atmega328old arduino_controller
+arduino-cli upload -p /dev/ttyUSB0 --fqbn arduino:avr:nano:cpu=atmega328old arduino_controller
+
+# mega
+arduino-cli compile --fqbn arduino:avr:mega:cpu=atmega2560 arduino_controller
+arduino-cli upload -p /dev/ttyUSB0 --fqbn arduino:avr:mega:cpu=atmega2560 arduino_controller
+```
+
+### ssh forwating
+
+```
+ssh -L 127.0.0.1:5000:localhost:5000 orangepi@31.211.117.161 -p 9622
+```
 
 
 
