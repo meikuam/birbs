@@ -91,6 +91,7 @@ arduino-cli core install arduino:avr
 arduino-cli lib install IRremote
 arduino-cli lib install NewPing
 arduino-cli lib install Servo
+arduino-cli lib install PCA9685_RT
 
 # nano
 arduino-cli compile --fqbn arduino:avr:nano:cpu=atmega328old arduino_controller
@@ -99,6 +100,18 @@ arduino-cli upload -p /dev/ttyUSB0 --fqbn arduino:avr:nano:cpu=atmega328old ardu
 # mega
 arduino-cli compile --fqbn arduino:avr:mega:cpu=atmega2560 arduino_controller
 arduino-cli upload -p /dev/ttyUSB0 --fqbn arduino:avr:mega:cpu=atmega2560 arduino_controller
+```
+
+## 7. setup variables
+
+```
+
+```
+
+## 8. docker-compose up
+
+```
+./docker/run_prod.sh
 ```
 
 ### ssh forwating
@@ -159,8 +172,13 @@ https://micro-pi.ru/%D0%B2%D0%BA%D0%BB%D1%8E%D1%87%D0%B5%D0%BD%D0%B8%D0%B5-%D1%8
     + https://github.com/avishayp/spidev
     + https://github.com/hypriot/rpi-kernel/issues/24
     + ``` docker run --rm -it --cap-add ALL -v /lib/modules:/lib/modules -v /sys:/sys --device /dev/mem:/dev/mem --privileged  --entrypoint bash ubuntu:18.04```
-  - фоновый процесс который по расписанию работает
-  - логгирование информации через телеграм бота
-  - крутую ui для настройки всяких штук (ага щас)
+  + фоновый процесс который по расписанию работает
+  + логгирование информации через телеграм бота
+  + крутую ui для настройки всяких штук (ага щас)
 
+
+- серводвигатели штука
+  https://github.com/RobTillaart/PCA9685_RT
+
+- еще надо разобраться с уровнем воды
 

@@ -1,7 +1,6 @@
 from typing import List
 import numpy as np
 import io
-# import skimage.io as skio
 from PIL import Image
 import numpy as np
 

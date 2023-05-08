@@ -6,6 +6,7 @@ import numpy as np
 from typing import List, Dict
 from threading import Thread, Lock
 from datetime import datetime
+from src.time.time import local_now
 
 
 def image_put_text(image: np.ndarray, text: str, bottom_left_point: List[int]) -> np.ndarray:
@@ -48,6 +49,7 @@ class CameraStream:
 
     def unselect_cap(self):
         self.cap = None
+        self.output = None
 
     def set_resolution(self, width, height):
         self.init_cap()
@@ -88,12 +90,12 @@ class CameraStream:
 
     def stream_function(self):
         while self.stream_running:
-            s = datetime.now()
+            s = local_now()
             ret_val, img = self.cap.read()
-            e = datetime.now() - s
+            e = local_now() - s
             if ret_val:
                 if self.add_date:
-                    img = image_put_text(img, datetime.now().strftime("%d.%m.%Y %H:%M:%S"), [50, 50])
+                    img = image_put_text(img, local_now().strftime("%d.%m.%Y %H:%M:%S"), [50, 50])
                 if self.fps_counter:
                     img = image_put_text(img, f"fps: {1/e.total_seconds():.2f}", [50, 100])
                 with self.lock:

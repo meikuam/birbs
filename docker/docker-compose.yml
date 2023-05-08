@@ -9,7 +9,6 @@ services:
       dockerfile: docker/api/Dockerfile
     environment:
       API_UVICORN_PROCESSES: ${API_UVICORN_PROCESSES}
-      API_WEB_PORT: ${API_WEB_PORT}
       API_SECRET: ${API_SECRET}
       API_ADMIN_EMAIL: ${API_ADMIN_EMAIL}
       API_ADMIN_PASSWORD: ${API_ADMIN_PASSWORD}
@@ -19,8 +18,8 @@ services:
       POSTGRES_PORT: 5432
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      UID: ${UID}
-    user: "${UID}:${GID}"
+      USER_ID: ${USER_ID}
+    user: "${USER_ID}:${GID}"
     stdin_open: true
     tty: true
     ports:
@@ -77,5 +76,3 @@ services:
 networks:
   postgres:
     driver: bridge
-
-# UID="$(id -u)" GID="$(id -g)" docker-compose up
