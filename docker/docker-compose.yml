@@ -19,9 +19,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       USER_ID: ${USER_ID}
-    user: "${USER_ID}:${GID}"
-    stdin_open: true
-    tty: true
     ports:
       - "8888:8888"
       - "${API_WEB_PORT}:8080"
@@ -36,6 +33,7 @@ services:
     devices:
       - /dev/mem:/dev/mem
       - /dev/spidev1.0:/dev/spidev1.0
+      - /dev/i2c-0:/dev/i2c-0
       - /dev/ttyUSB0:/dev/ttyUSB0
     privileged: true
     networks:

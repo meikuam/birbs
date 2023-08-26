@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 
 # install apt packages
@@ -18,8 +18,7 @@ RUN apt update && apt install -y --no-install-recommends \
         libgl1-mesa-glx \
         openssh-server \
         python3-pip python3-dev \
-        tzdata \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+        tzdata
 
 ENV TZ="Asia/Tomsk"
 # python install
@@ -29,17 +28,22 @@ RUN python3 -m pip install -r requirements.txt
 
 # create user
 # TODO: fix gid for specific groups
+ARG UNAME=user
+ARG USER_ID=1000
+ARG GID=1000
 RUN groupadd -g 1001 spiuser
 RUN groupadd -g 117 i2c
 
-RUN useradd -d /home/user -ms /bin/bash -G sudo,video,spiuser,i2c user
-RUN echo user:user | chpasswd
+RUN groupadd -g $GID -o $UNAME
 
-RUN echo "export PATH=$PATH" >> /home/user/.bashrc
-RUN echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> /home/user/.bashrc
-RUN echo "export VISIBLE=now" >> /home/user/.bashrc
-RUN echo "export NOTVISIBLE=$NOTVISIBLE" >> /home/user/.bashrc
-RUN cat /root/.bashrc >> /home/user/.bashrc
+RUN useradd -d /home/$UNAME -ms /bin/bash -u $USER_ID -g $GID -G sudo,video,spiuser,i2c $UNAME
+RUN echo $UNAME:$UNAME | chpasswd
+
+RUN echo "export PATH=$PATH" >> /home/$UNAME/.bashrc
+RUN echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> /home/$UNAME/.bashrc
+RUN echo "export VISIBLE=now" >> /home/$UNAME/.bashrc
+RUN echo "export NOTVISIBLE=$NOTVISIBLE" >> /home/$UNAME/.bashrc
+RUN cat /root/.bashrc >> /home/$UNAME/.bashrc
 
 # ssh fix
 RUN mkdir /var/run/sshd
@@ -49,7 +53,7 @@ RUN echo "echo \"PasswordAuthentication no\" >> /etc/ssh/sshd_config" >> /root/s
     chmod +x /root/ssh_disable_password.sh
 
 # copy environment
-WORKDIR /home/user/birbs
+WORKDIR /home/$UNAME/birbs
 COPY docker/api/supervisor /etc/supervisor/conf.d/
 
 # expose api ports
@@ -57,6 +61,5 @@ EXPOSE 8080
 EXPOSE 8888
 EXPOSE 22
 
-USER user
 
 CMD ["supervisord", "-n"]
