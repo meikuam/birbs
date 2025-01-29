@@ -7,7 +7,6 @@ class BackgroundRunner:
     def __init__(self):
         self.running = False
 
-
     async def run(self):
         while True:
             await asyncio.sleep(0.5)

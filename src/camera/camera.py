@@ -145,12 +145,12 @@ class CameraStreamsContianer:
     def __init__(self):
         self.device_mapping = {
             1: {
-                "feeder": 3,
-                "drinker": 7
+                "feeder": 0,
+                "drinker": 2
             },
             2: {
-                "feeder": 1,
-                "drinker": 5
+                "feeder": 4,
+                "drinker": 6
             }
         }
         self.device_id = None

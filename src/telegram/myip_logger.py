@@ -1,8 +1,7 @@
-from typing import Union
 import logging
 import asyncio
 import public_ip as ip
-from src.telegram_bot.bot import send_message, chat_ids
+from src.telegram.bot import send_message, chat_ids
 
 
 class MyIPLogger:
@@ -19,6 +18,7 @@ class MyIPLogger:
                 if self.current_ip != myip:
                     await send_message(chat_ids[0], myip)
                     self.current_ip = myip
+                    logging.info(f"cool: {self.current_ip}")
             except Exception as e:
                 logging.error(exc_info=e)
             await asyncio.sleep(self.wait_time)
