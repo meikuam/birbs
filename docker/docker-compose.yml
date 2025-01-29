@@ -21,6 +21,7 @@ services:
       USER_ID: ${USER_ID}
     ports:
       - "8888:8888"
+      - "8889:8889"
       - "${API_WEB_PORT}:8080"
       - "${API_SSH_PORT}:22"
     volumes:
