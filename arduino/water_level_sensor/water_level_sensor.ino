@@ -15,9 +15,7 @@ bool device_register_mask[10] = {0, 0, 0, 0, 1, 1, 1, 1, 1, 1}; // master can wr
 
 /**
  * 0x0 - water level 1 - low byte
- * 0x1 - water level 1 - hight byte
- * 0x2 - water level 2 - low byte
- * 0x3 - water level 2 - hight byte
+ * 0x1 - water level 2 - low byte
 */
 
 
@@ -106,7 +104,6 @@ uint8_t log_times = 0;
 iarduino_I2C_connect I2C_device;
 
 void setup() {
-  Serial.begin(115200);
   // инициируем подключение к шине I2C в качестве ведомого (slave) устройства, с указанием своего адреса на шине.
   Wire.begin(device_address); 
   I2C_device.begin(device_register);
@@ -125,28 +122,6 @@ void loop() {
     delay(1);                    
     for (int i = 0; i < water_level_sensors_count; i++) {
         water_level_sensors[i]->run();
-        device_register[i * 2] = water_level_sensors[i]->water_level_current;
-        device_register[i * 2 + 1] = (water_level_sensors[i]->water_level_current >> 8);
-    }
-    log_times += 1;
-    if (log_times >= 100) {
-        log_times = 0;
-        Serial.print("Ping: ");
-        Serial.print(water_level_sensors[0]->water_level_current);     
-        Serial.print(" ");
-
-        Serial.print(device_register[0], DEC);
-        Serial.print(" ");
-        Serial.print(device_register[1], DEC);
-        Serial.print("mm ");
-
-        Serial.print("Ping: ");
-        Serial.print(water_level_sensors[1]->water_level_current);     
-        Serial.print(" ");
-
-        Serial.print(device_register[2], DEC);
-        Serial.print(" ");
-        Serial.print(device_register[3], DEC);
-        Serial.println("mm");
+        device_register[i] = water_level_sensors[i]->water_level_current;
     }
 }

@@ -59,6 +59,30 @@ sudo groupadd spiuser
 sudo adduser "$USER" spiuser
 ```
 
+i2c access
+
+```
+# create file /etc/udev/rules.d/50-i2c.rules
+# with content
+
+SUBSYSTEM=="i2c-dev", GROUP="i2c", MODE="0660"
+
+# next
+sudo groupadd i2c
+sudo adduser "$USER" i2c
+
+```
+
+gpio access
+
+```
+# create /etc/udev/rules.d/50-gpio.rules
+
+SUBSYSTEM=="gpio",GROUP="gpio", MODE="0660"
+
+sudo groupadd gpio
+sudo adduser "$USER" gpio
+```
 
 
 ## 5. install docker
@@ -86,12 +110,29 @@ mkdir ~/arduino-cli/bin
 curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | BINDIR=~/arduino-cli/bin sh
 echo 'export PATH="${HOME}/arduino-cli/bin:${PATH}"' >> ~/.bashrc
 
+sudo apt install arduino-ctags
+
+# fix error workaround (orpi3lts)
+cd .arduino15/packages/builtin/tools/ctags/5.8-arduino11
+mv ctags orig.ctags
+ln -s /usr/bin/arduino-ctags ctags
+
 arduino-cli core update-index
 arduino-cli core install arduino:avr
 arduino-cli lib install IRremote
 arduino-cli lib install NewPing
 arduino-cli lib install Servo
 arduino-cli lib install PCA9685_RT
+arduino-cli lib install iarduino_i2c_connect
+arduino-cli lib install iarduino_HC_SR04_tmr
+
+arduino-cli config init
+arduino-cli config set library.enable_unsafe_install true
+
+#arduino-cli lib install --git-url https://github.com/tremaru/iarduino_I2C_connect.git
+
+arduino-cli lib install --git-url https://github.com/meikuam/iarduino_I2C_connect.git
+
 
 # nano
 arduino-cli compile --fqbn arduino:avr:nano:cpu=atmega328old arduino_controller
@@ -158,6 +199,7 @@ https://gist.github.com/chrismeyersfsu/3317769
 https://forum.arduino.cc/t/spi-slave-mode-example-code/66617
 
 https://github.com/orangepi-xunlong/wiringOP
+
 https://micro-pi.ru/%D0%B2%D0%BA%D0%BB%D1%8E%D1%87%D0%B5%D0%BD%D0%B8%D0%B5-%D1%88%D0%B8%D0%BD%D1%8B-spi-%D0%BD%D0%B0-orange-pi/#_SPI__414_Ubuntu_1804
 
 
@@ -182,3 +224,53 @@ https://micro-pi.ru/%D0%B2%D0%BA%D0%BB%D1%8E%D1%87%D0%B5%D0%BD%D0%B8%D0%B5-%D1%8
 
 - еще надо разобраться с уровнем воды
 
+
+
+
+https://lesson.iarduino.ru/page/urok-26-3-soedinyaem-dve-arduino-po-shine-i2c/
+
+https://www.instructables.com/Arduino-I2C-and-Multiple-Slaves/
+
+
+
+https://github.com/tremaru/iarduino_I2C_connect/tree/master
+https://lesson.iarduino.ru/page/urok-26-3-soedinyaem-dve-arduino-po-shine-i2c/
+
+## add to fstab sd card:
+
+/etc/fstab
+
+```
+UUID=%your uuid%     /media/data   ext4    rw,suid,auto,user,exec,nofail   0    0
+```
+
+## move docker root to sd card:
+
+https://www.ibm.com/docs/en/z-logdata-analytics/5.1.0?topic=software-relocating-docker-root-directory
+
+```
+sudo systemctl stop docker.socket
+sudo systemctl stop containerd
+sudo mkdir -p /media/data
+sudo mv /var/lib/docker /media/data
+
+sudo vim /etc/docker/daemon.json
+
+{
+  "data-root": "/media/data/docker"
+}
+
+sudo systemctl start docker
+
+docker info -f '{{ .DockerRootDir}}'
+```
+
+
+https://python-periphery.readthedocs.io/en/latest/_modules/periphery/i2c.html#I2C
+https://micro-pi.ru/%D1%81%D0%B5%D1%80%D0%B2%D0%BE-sg90-pca9685-python-raspberry-pi/
+https://github.com/adafruit/Adafruit_Python_PCA9685
+https://github.com/adafruit/Adafruit_CircuitPython_PCA9685/tree/main
+
+
+
+sudo apt install i2c-tools

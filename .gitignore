@@ -1,2 +1,5 @@
 /docker/.env
 /arduino_controller/libs/
+*.pyc
+.idea/
+.vscode/
