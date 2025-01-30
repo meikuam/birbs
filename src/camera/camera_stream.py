@@ -42,9 +42,11 @@ class CameraStream:
                 yield image
 
     def get_frame(self, encode=True):
-        with self.lock.acquire_timeout() as acquire:
-            if self.current_frame is None:
+        with self.lock.acquire_timeout(timeout=self.lock_timeout) as acquire:
+            if not acquire or self.current_frame is None:
                 raise ReadFrameException("Empty current stream frame")
+            if self.stream_running is False:
+                raise ReadFrameException("Stream is not running")
             image = self.current_frame.copy()
 
         if encode:

@@ -8,7 +8,7 @@ from src.camera.common import ReadFrameException
 
 logger = logging.getLogger(name=__name__)
 
-FRAME_READ_TIMEOUT = 1
+FRAME_READ_TIMEOUT = 2
 
 
 class Camera:
