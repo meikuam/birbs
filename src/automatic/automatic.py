@@ -297,14 +297,14 @@ class AutomaticRunner:
             AutomaticDrinkerUpdater("pek", AutomaticDrinker(
                 autofill_status=True,
                 logging_status=True,
-                day_start_time=datetime.time(hour=5, minute=15),
+                day_start_time=datetime.time(hour=9, minute=15),
                 day_end_time=datetime.time(hour=19, minute=0),
                 cooldown_period=datetime.timedelta(hours=2, minutes=0)
             )),
             AutomaticDrinkerUpdater("pop", AutomaticDrinker(
                 autofill_status=True,
                 logging_status=True,
-                day_start_time=datetime.time(hour=5, minute=18),
+                day_start_time=datetime.time(hour=9, minute=18),
                 day_end_time=datetime.time(hour=19, minute=0),
                 cooldown_period=datetime.timedelta(hours=2, minutes=0)
             ))
@@ -313,18 +313,18 @@ class AutomaticRunner:
             AutomaticFeederUpdater("pek", AutomaticFeeder(
                 autofeed_status=True,
                 logging_status=True,
-                day_start_time=datetime.time(hour=5, minute=20),
+                day_start_time=datetime.time(hour=9, minute=20),
                 day_end_time=datetime.time(hour=18, minute=0),
                 daily_feed_amount=3,
-                feed_amount=2
+                feed_amount=3
             )),
             AutomaticFeederUpdater("pop", AutomaticFeeder(
                 autofeed_status=True,
                 logging_status=True,
-                day_start_time=datetime.time(hour=5, minute=25),
+                day_start_time=datetime.time(hour=9, minute=25),
                 day_end_time=datetime.time(hour=18, minute=0),
                 daily_feed_amount=3,
-                feed_amount=2
+                feed_amount=3
             ))
         ]
 
@@ -341,7 +341,7 @@ class AutomaticRunner:
                     await feeder_updater.routine()
                 except Exception as e:
                     logger.error(f"error at feeder_updater: {e}")
-            await asyncio.sleep(1)
+            await asyncio.sleep(5)
 
 
 if __name__ == "__main__":
