@@ -42,3 +42,6 @@ class Drinker:
             time.sleep(self.check_period)
             logger.info(f"drinker {self.water_sensor.sensor_id} not empty")
         self.out_valve.close()
+
+    def is_full(self):
+        return self.water_sensor.is_full()
