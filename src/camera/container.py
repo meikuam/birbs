@@ -7,6 +7,9 @@ import cv2
 import time
 from datetime import datetime
 import numpy as np
+
+
+from src.utils.common import Singleton
 from src.time.time import local_now
 from src.camera.camera import Camera
 from src.camera.camera_stream import CameraStream
@@ -39,7 +42,7 @@ def get_available_camera_streams(key_index=True) -> dict[str, CameraStream]:
     return camera_streams
 
 
-class CameraStreamsContianer:
+class CameraStreamsContianer(metaclass=Singleton):
 
     def __init__(self):
         self.current_device_id = None

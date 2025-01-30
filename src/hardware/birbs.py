@@ -4,13 +4,14 @@ import board
 from adafruit_motor import servo
 from adafruit_pca9685 import PCA9685
 
+from src.utils.common import Singleton
 from src.hardware.common import Valve, ActionServo
 from src.hardware.water_sensor import WaterLevel, WaterSensor
 from src.hardware.drinker import Drinker
 from src.hardware.feeder import Feeder
 
 
-class Birbs:
+class Birbs(metaclass=Singleton):
     def __init__(self):
         self.i2c = board.I2C()
         self.water_level = WaterLevel(self.i2c)

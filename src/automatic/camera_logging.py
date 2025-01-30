@@ -1,11 +1,13 @@
 from __future__ import annotations
-from typing import Literal
 import cv2
+from typing import Literal
+
+from src.utils.common import Singleton
 from src.camera.container import CameraStreamsContianer
 from src.telegram.bot import log_image, log_message
 
 
-class CameraTelegramLogging:
+class CameraTelegramLogging(metaclass=Singleton):
 
     def __init__(self, camera_container: CameraStreamsContianer):
         self.camera_container = camera_container
