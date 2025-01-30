@@ -29,7 +29,7 @@ def get_available_camera_streams(key_index=True) -> dict[str, CameraStream]:
         if resolution[0] > 0:
             logging.info(f"add device {device}, {resolution}")
             camera.deinitialize()
-            camera_stream = CameraStream(camera)
+            camera_stream = CameraStream(camera, print_date=True)
             if key_index:
                 device_id = int(device[len("/dev/video"):])
                 camera_streams[device_id] = camera_stream

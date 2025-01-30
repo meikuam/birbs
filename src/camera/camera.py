@@ -2,13 +2,13 @@ from __future__ import annotations
 import logging
 import cv2
 import numpy as np
-from timeout_decorator import timeout_decorator
+# from timeout_decorator import timeout_decorator
 from src.camera.common import ReadFrameException
 
 
 logger = logging.getLogger(name=__name__)
 
-FRAME_READ_TIMEOUT = 2
+FRAME_READ_TIMEOUT = 1
 
 
 class Camera:
@@ -28,7 +28,7 @@ class Camera:
             self.cap.release()
         self.cap = None
 
-    @timeout_decorator.timeout(FRAME_READ_TIMEOUT, use_signals=False)
+    # @timeout_decorator.timeout(FRAME_READ_TIMEOUT, use_signals=False)
     def read(self) -> np.ndarray:
         if self.cap is None:
             raise ReadFrameException("Not initialized")

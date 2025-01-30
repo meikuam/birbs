@@ -18,12 +18,7 @@ templates = Jinja2Templates(directory="www/templates")
 
 @video_app.get("/")
 async def index(request: Request):
-    return templates.TemplateResponse("video.html", {"request": request})
-
-
-
-
-
+    return templates.TemplateResponse("video_unsafe.html", {"request": request})
 
 if __name__ == "__main__":
-    uvicorn.run("app:app", host="0.0.0.0", port=5000, log_level="info")
+    uvicorn.run("video_app:video_app", host="0.0.0.0", port=9000, log_level="info")
