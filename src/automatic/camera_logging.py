@@ -1,5 +1,4 @@
 from __future__ import annotations
-from aiogram import Bot
 from typing import Literal
 import cv2
 from src.camera.container import CameraStreamsContianer
@@ -8,9 +7,8 @@ from src.telegram.bot import log_image, log_message
 
 class CameraTelegramLogging:
 
-    def __init__(self, camera_container: CameraStreamsContianer, bot: Bot):
+    def __init__(self, camera_container: CameraStreamsContianer):
         self.camera_container = camera_container
-        self.bot = bot
         self.device_mapping = {
             "pop": {
                 "feeder": 0,
@@ -30,7 +28,7 @@ class CameraTelegramLogging:
         device_id = self.device_mapping[birb_id][device_type]
         stream_select_state = self.camera_container.select_stream(device_id)
         if stream_select_state:
-            return next(self.camera_container.get_frame(encode=False))
+            return next(self.camera_container.stream_frame(encode=False))
         else:
             return None
 
