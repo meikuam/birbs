@@ -1,4 +1,7 @@
+import logging
 from src.hardware.common import ActionServo
+
+logger = logging.getLogger(name=__name__)
 
 
 class Feeder:
@@ -8,6 +11,8 @@ class Feeder:
 
     def feed(self):
         self.feeder.action()
+        self.logger.info("feeder feed")
 
     def empty(self):
         self.box.action()
+        self.logger.info("feeder empty")

@@ -1,5 +1,14 @@
+from __future__ import annotations
 import numpy as np
 import cv2
+
+
+class ReadFrameException(Exception):
+    pass
+
+
+class EncodeImageException(Exception):
+    pass
 
 
 def image_put_text(
@@ -26,3 +35,11 @@ def image_put_text(
         thickness=2
     )
     return image
+
+
+def encode_image(image: np.ndarray) -> bytes:
+    flag, image = cv2.imencode('.jpg', image)
+    if flag:
+        return b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + bytearray(image) + b'\r\n'
+    else:
+        raise EncodeImageException("Encode image error")

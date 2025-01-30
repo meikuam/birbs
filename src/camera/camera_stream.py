@@ -2,97 +2,61 @@ import cv2
 import time
 import logging
 from threading import Thread
-from timeout_decorator import timeout_decorator, TimeoutError
+from timeout_decorator import TimeoutError
 
 from src.time.time import local_now
-from src.camera.common import image_put_text
+from src.camera.common import image_put_text, encode_image, ReadFrameException, EncodeImageException
 from src.utils.common import TimeoutLock
+from src.camera.camera import Camera
 
 logger = logging.getLogger(name=__name__)
 
 
-FRAME_READ_TIMEOUT = 1
-
-
-class ReadFrameException(Exception):
-    pass
-
-
 class CameraStream:
-    def __init__(self, source=None, print_date=False, print_fps=False):
+    def __init__(self, camera: Camera, print_date: bool = True, print_fps: bool = False):
         self.print_date = print_date
         self.print_fps = print_fps
-        self.source = source
-        self.cap = None
-        self.init_cap()
-        self.thread = None
-        self.stream_running = False
+        self.camera = camera
         self.current_frame = None
         self.lock = TimeoutLock()
-        self.cooldown_timeout = 5
-        self.lock_timeout = 1
+        self.thread = None
+        self.stream_running = False
+        self.error_timeout = 5
+        self.lock_timeout = 2
 
-    def init_cap(self) -> None:
-        if self.cap is None:
-            logger.info(f"{self.source}: init VideoCapture")
-            self.cap = cv2.VideoCapture(self.source)
-
-    def deinit_cap(self) -> None:
-        self.current_frame = None
-        if self.cap is not None:
-            self.cap.release()
-        self.cap = None
-
-    def set_resolution(self, width, height) -> None:
-        self.init_cap()
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-
-    def get_resolution(self) -> list[int]:
-        self.init_cap()
-        current_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        current_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        return [current_width, current_height]
-
-    def get_max_resolution(self) -> list[int]:
-        """
-        https://stackoverflow.com/questions/18458422/query-maximum-webcam-resolution-in-opencv
-        """
-        high_value = 10000
-        current_width, current_height = self.get_resolution()
-        self.set_resolution(high_value, high_value)
-
-        max_width, max_height = self.get_resolution()
-        self.set_resolution(current_width, current_height)
-        return [max_width, max_height]
-
-    @timeout_decorator.timeout(FRAME_READ_TIMEOUT, use_signals=False)
-    def read(self):
-        ret, image = self.cap.read()
-        if ret:
-            return image
-        else:
-            raise ReadFrameException("Empty frame")
-
-    def get_current_frame(self, encode=True):
+    def stream_frame(self, encode=True):
         while True:
-            with self.lock:
-                if self.current_frame is None:
+            with self.lock.acquire_timeout(timeout=self.lock_timeout) as acquire:
+                if not acquire or self.current_frame is None:
                     continue
+                if self.stream_running is False:
+                    raise ReadFrameException("Stream is not running")
                 image = self.current_frame.copy()
+
             if encode:
-                flag, image = cv2.imencode('.jpg', image)
-                if not flag:
+                try:
+                    yield encode_image(image)
+                except EncodeImageException:
                     continue
-                yield b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + bytearray(image) + b'\r\n'
             else:
                 yield image
+
+    def get_frame(self, encode=True):
+        with self.lock.acquire_timeout() as acquire:
+            if self.current_frame is None:
+                raise ReadFrameException("Empty current stream frame")
+            image = self.current_frame.copy()
+
+        if encode:
+            return encode_image(image)
+        else:
+            return image
 
     def _stream_function(self):
         while self.stream_running:
             try:
                 start = time.perf_counter()
-                image = self.read()
+                image = self.camera.read()
                 elapsed = time.perf_counter() - start
 
                 if self.print_date:
@@ -120,26 +84,27 @@ class CameraStream:
                         raise TimeoutError("Lock acquire timeout")
 
             except (TimeoutError, ReadFrameException) as e:
-                logging.error(f"{self.source}: read error {e}")
-                time.sleep(self.cooldown_seconds)
+                logging.error(f"{self.camera.source}: read error {e}")
+                time.sleep(self.error_timeout)
 
     def start(self):
         if not self.stream_running:
-            logger.info(f"{self.source}: start thread")
-            self.init_cap()
+            logger.info(f"{self.camera.source}: start thread")
+            self.camera.initialize()
             self.stream_running = True
             self.thread = Thread(target=self._stream_function, args=())
             self.thread.start()
-            logger.info(f"{self.source}: started thread")
+            logger.info(f"{self.camera.source}: started thread")
         else:
-            logger.info(f"{self.source}: already running thread")
+            logger.info(f"{self.camera.source}: already running thread")
 
     def stop(self):
         if self.thread is not None:
-            logger.info(f"{self.source}: stop thread")
+            logger.info(f"{self.camera.source}: stop thread")
             self.stream_running = False
+            self.current_frame = None
             self.thread.join()
-            self.deinit_cap()
-            logger.info(f"{self.source}: stopped thread")
+            self.camera.deinitialize()
+            logger.info(f"{self.camera.source}: stopped thread")
         else:
-            logger.info(f"{self.source}: already stopped thread")
+            logger.info(f"{self.camera.source}: already stopped thread")

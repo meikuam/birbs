@@ -28,12 +28,12 @@ class Birbs:
         self.pek_in_valve = Valve(self.servo13, 60, 145)
         self.pek_out_valve = Valve(self.servo14, 40, 120)
         self.pek_water_sensor = WaterSensor(self.water_level, 1, 70, 65)
-        self.pek_drinker = Drinker(self.pek_in_valve, self.pek_out_valve, self.pek_water_sensor)
+        self.pek_drinker = Drinker(self.pek_in_valve, self.pek_out_valve, self.pek_water_sensor, action_timeout=8)
 
         self.pop_in_valve = Valve(self.servo12, 60, 145)
         self.pop_out_valve = Valve(self.servo15, 40, 120)
         self.pop_water_sensor = WaterSensor(self.water_level, 0, 70, 65)
-        self.pop_drinker = Drinker(self.pop_in_valve, self.pop_out_valve, self.pop_water_sensor)
+        self.pop_drinker = Drinker(self.pop_in_valve, self.pop_out_valve, self.pop_water_sensor, action_timeout=10)
 
         self.pop_feed = ActionServo(self.servo0, 125, 90, 0.35)
         self.pop_box = ActionServo(self.servo1, 170, 95, 2)
@@ -45,4 +45,3 @@ class Birbs:
 
     def __del__(self):
         self.i2c.deinit()
-
