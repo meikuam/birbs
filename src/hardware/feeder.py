@@ -11,8 +11,8 @@ class Feeder:
 
     def feed(self):
         self.feeder.action()
-        self.logger.info("feeder feed")
+        logger.info("feeder feed")
 
     def empty(self):
         self.box.action()
-        self.logger.info("feeder empty")
+        logger.info("feeder empty")

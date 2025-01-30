@@ -41,7 +41,7 @@ async def fill_drinker(birb_id: str, logging_status: bool):
             birbs.pek_drinker.fill()
         elif birb_id == "pop":
             birbs.pop_drinker.fill()
-    except TimeoutError as e:
+    except (TimeoutError, Exception) as e:
         message = f"{local_now().time()} {birb_id} drinker got error {e}"
         logger.error(message)
         if logging_status:
@@ -56,6 +56,7 @@ async def fill_drinker(birb_id: str, logging_status: bool):
             alt_text=f"{birb_id} after fill drinker"
         )
     return True
+
 
 async def empty_drinker(birb_id: str, logging_status: bool):
     if logging_status:
@@ -79,6 +80,7 @@ async def empty_drinker(birb_id: str, logging_status: bool):
             device_type="drinker",
             alt_text=f"{birb_id} after empty drinker"
         )
+
 
 class AutomaticDrinker(BaseModel):
     autofill_status: Optional[bool]
@@ -137,10 +139,17 @@ async def empty_feeder(birb_id: str, logging_status: bool):
         )
 
     logger.info(f"{local_now().time()} {birb_id} feeder box empty")
-    if birb_id == "pek":
-        birbs.pek_feeder.empty()
-    elif birb_id == "pop":
-        birbs.pop_feeder.empty()
+    try:
+        if birb_id == "pek":
+            birbs.pek_feeder.empty()
+        elif birb_id == "pop":
+            birbs.pop_feeder.empty()
+    except Exception as e:
+        message = f"{local_now().time()} {birb_id} feeder got error {e}"
+        logger.error(message)
+        if logging_status:
+            await camera_telegram_logger.log_message(message)
+
 
     await asyncio.sleep(5)
 
@@ -163,10 +172,16 @@ async def fill_feeder(birb_id: str, feed_amount: int, logging_status: bool):
     for i in range(feed_amount):
         logger.info(f"{local_now().time()} {birb_id} feeder gate feed")
 
-        if birb_id == "pek":
-            birbs.pek_feeder.feed()
-        elif birb_id == "pop":
-            birbs.pop_feeder.feed()
+        try:
+            if birb_id == "pek":
+                birbs.pek_feeder.feed()
+            elif birb_id == "pop":
+                birbs.pop_feeder.feed()
+        except Exception as e:
+            message = f"{local_now().time()} {birb_id} feeder got error {e}"
+            logger.error(message)
+            if logging_status:
+                await camera_telegram_logger.log_message(message)
 
         await asyncio.sleep(5)
         if logging_status:
@@ -282,14 +297,14 @@ class AutomaticRunner:
             AutomaticDrinkerUpdater("pek", AutomaticDrinker(
                 autofill_status=True,
                 logging_status=True,
-                day_start_time=datetime.time(hour=0, minute=0),
+                day_start_time=datetime.time(hour=5, minute=15),
                 day_end_time=datetime.time(hour=19, minute=0),
                 cooldown_period=datetime.timedelta(hours=2, minutes=0)
             )),
             AutomaticDrinkerUpdater("pop", AutomaticDrinker(
                 autofill_status=True,
                 logging_status=True,
-                day_start_time=datetime.time(hour=9, minute=20),
+                day_start_time=datetime.time(hour=5, minute=18),
                 day_end_time=datetime.time(hour=19, minute=0),
                 cooldown_period=datetime.timedelta(hours=2, minutes=0)
             ))
@@ -298,7 +313,7 @@ class AutomaticRunner:
             AutomaticFeederUpdater("pek", AutomaticFeeder(
                 autofeed_status=True,
                 logging_status=True,
-                day_start_time=datetime.time(hour=9, minute=0),
+                day_start_time=datetime.time(hour=5, minute=20),
                 day_end_time=datetime.time(hour=18, minute=0),
                 daily_feed_amount=3,
                 feed_amount=2
@@ -306,7 +321,7 @@ class AutomaticRunner:
             AutomaticFeederUpdater("pop", AutomaticFeeder(
                 autofeed_status=True,
                 logging_status=True,
-                day_start_time=datetime.time(hour=9, minute=10),
+                day_start_time=datetime.time(hour=5, minute=25),
                 day_end_time=datetime.time(hour=18, minute=0),
                 daily_feed_amount=3,
                 feed_amount=2
