@@ -271,6 +271,7 @@ class AutomaticFeederUpdater(AutomaticUpdater):
                 trigger.state = TriggerState.triggered
 
         self.feed_times, self.feed_triggers = feed_times, feed_triggers
+        logger.info(f"{self.birb_id} update_feed_times {self.feed_times}")
 
 
 class AutomaticRunner:
