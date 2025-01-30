@@ -19,14 +19,13 @@ camera_container = CameraStreamsContianer()
 camera_telegram_logger = CameraTelegramLogging(camera_container)
 
 
-
 async def fill_drinker(birb_id: str, logging_status: bool):
 
     if birb_id == "pek":
-        if birbs.pek_drinker.is_fill():
+        if birbs.pek_drinker.is_full():
             return False
     elif birb_id == "pop":
-        if birbs.pop_drinker.is_fill():
+        if birbs.pop_drinker.is_full():
             return False
 
     if logging_status:
@@ -37,10 +36,16 @@ async def fill_drinker(birb_id: str, logging_status: bool):
         )
 
     logger.info(f"{local_now().time()} {birb_id} drinker fill")
-    if birb_id == "pek":
-        birbs.pek_drinker.fill()
-    elif birb_id == "pop":
-        birbs.pop_drinker.fill()
+    try:
+        if birb_id == "pek":
+            birbs.pek_drinker.fill()
+        elif birb_id == "pop":
+            birbs.pop_drinker.fill()
+    except TimeoutError as e:
+        message = f"{local_now().time()} {birb_id} drinker got error {e}"
+        logger.error(message)
+        if logging_status:
+            await camera_telegram_logger.log_message(message)
 
     await asyncio.sleep(5)
 
@@ -275,17 +280,17 @@ class AutomaticRunner:
         self.drinkers = [
             AutomaticDrinkerUpdater("pek", AutomaticDrinker(
                 autofill_status=True,
-                logging_status=False,
+                logging_status=True,
                 day_start_time=datetime.time(hour=0, minute=0),
                 day_end_time=datetime.time(hour=19, minute=0),
-                cooldown_period=datetime.timedelta(hours=0, minutes=5)
+                cooldown_period=datetime.timedelta(hours=2, minutes=0)
             )),
             AutomaticDrinkerUpdater("pop", AutomaticDrinker(
                 autofill_status=True,
                 logging_status=True,
                 day_start_time=datetime.time(hour=9, minute=20),
                 day_end_time=datetime.time(hour=19, minute=0),
-                cooldown_period=datetime.timedelta(hours=1, minutes=0)
+                cooldown_period=datetime.timedelta(hours=2, minutes=0)
             ))
         ]
         self.feeders = [
