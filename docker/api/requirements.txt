@@ -33,3 +33,4 @@ databases[postgresql]>=0.7.0
 python-periphery==2.4.1
 content-size-limit-asgi==0.1.5
 public-ip
+timeout-decorator
