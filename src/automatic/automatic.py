@@ -164,7 +164,6 @@ class AutomaticDrinkerUpdater(AutomaticUpdater):
         tdelta_drinks = tdelta / self.state.daily_drink_amount
         self.times = []
         self.triggers = []
-        colldown_after_empty = datetime.timedelta(minutes=5)
         times = [self.state.day_start_time]
         triggers = [
             TimeTrigger(
@@ -172,7 +171,7 @@ class AutomaticDrinkerUpdater(AutomaticUpdater):
                 func=empty_drinker,
                 args=(self.birb_id, self.state.logging_status, )),
             TimeTrigger(
-                trigger_time=self.state.day_start_time + colldown_after_empty,
+                trigger_time=self.state.day_start_time,
                 func=fill_drinker,
                 args=(self.birb_id, self.state.logging_status, ))
         ]
