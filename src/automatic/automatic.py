@@ -96,7 +96,7 @@ class AutomaticDrinker(BaseModel):
     day_start_time: Optional[datetime.time]
     day_end_time: Optional[datetime.time]
     cooldown_period: Optional[datetime.timedelta]
-    daily_drink_amount: Optional[datetime.timedelta]
+    daily_drink_amount: Optional[int]
 
 
 class AutomaticDrinkerUpdater(AutomaticUpdater):
