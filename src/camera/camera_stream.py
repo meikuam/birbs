@@ -87,6 +87,8 @@ class CameraStream:
 
             except (TimeoutError, ReadFrameException) as e:
                 logging.error(f"{self.camera.source}: read error {e}")
+                self.camera.deinitialize()
+                self.camera.initialize()
                 time.sleep(self.error_timeout)
 
     def start(self):
