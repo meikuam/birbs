@@ -155,6 +155,7 @@ class AutomaticDrinkerUpdater(AutomaticUpdater):
             self.state.cooldown_period = new_state.cooldown_period
         if new_state.daily_drink_amount is not None:
             self.state.daily_drink_amount = new_state.daily_drink_amount
+        self.update_times()
         logger.info(f"state updated: {self.birb_id} {self.state}")
 
     def update_times(self):
