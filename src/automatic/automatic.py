@@ -39,6 +39,8 @@ async def fill_drinker(birb_id: str, logging_status: bool):
     try:
         if birb_id == "pek":
             birbs.pek_drinker.fill()
+            await asyncio.sleep(5)
+            birbs.pek_drinker.fill()
         elif birb_id == "pop":
             birbs.pop_drinker.fill()
     except (TimeoutError, Exception) as e:
@@ -68,19 +70,27 @@ async def empty_drinker(birb_id: str, logging_status: bool):
 
     logger.info(f"{local_now().time()} {birb_id} empty drinker 1")
     if birb_id == "pek":
-        birbs.pek_drinker.empty()
+        birbs.pek_drinker.out_valve.open()
     elif birb_id == "pop":
-        birbs.pop_drinker.empty()
+        birbs.pop_drinker.out_valve.open()
 
-    await asyncio.sleep(5)
+    await asyncio.sleep(30)
 
-    logger.info(f"{local_now().time()} {birb_id} empty drinker 2")
+    logger.info(f"{local_now().time()} {birb_id} clean drinker 2")
     if birb_id == "pek":
-        birbs.pek_drinker.empty()
+        birbs.pek_drinker.fill()
     elif birb_id == "pop":
-        birbs.pop_drinker.empty()
+        birbs.pop_drinker.fill()
 
     await asyncio.sleep(5)
+
+    logger.info(f"{local_now().time()} {birb_id} empty drinker 3")
+    if birb_id == "pek":
+        birbs.pek_drinker.out_valve.open()
+    elif birb_id == "pop":
+        birbs.pop_drinker.out_valve.open()
+
+    await asyncio.sleep(30)
 
     if logging_status:
         await camera_telegram_logger.log_stream_frame(
